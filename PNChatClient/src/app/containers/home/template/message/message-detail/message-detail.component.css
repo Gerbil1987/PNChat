@@ -1,0 +1,19 @@
+.box-group-info {
+  position: relative;
+}
+
+.box-group-info i {
+  position: absolute;
+  top: 10px;
+  left: calc(50% + 30px);
+  cursor: pointer;
+}
+.mdi-download {
+  color: #f0f0f0;
+}
+.emojionearea {
+  width: 90%;
+}
+.emojionearea .emojionearea-editor {
+    min-height: 1em;
+}

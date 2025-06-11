@@ -1,0 +1,17 @@
+strong {
+    font-weight: 600;
+}
+
+ul {
+    margin-left: -18px;
+}
+li {
+    font-size: 13px;
+}
+li::marker {
+    content: attr(data-emoji);
+}
+
+li:hover::marker {
+    content: "🤯";
+}

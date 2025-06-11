@@ -1,0 +1,5 @@
+{
+  "appService.defaultWebAppToDeploy": "/subscriptions/acf0058d-7426-46f3-b5e6-edf9c4c96aa7/resourceGroups/PNChat/providers/Microsoft.Web/sites/pnsocial",
+  "appService.deploySubpath": "dist\\pnchat-client",
+  "editor.guides.bracketPairs": true
+}

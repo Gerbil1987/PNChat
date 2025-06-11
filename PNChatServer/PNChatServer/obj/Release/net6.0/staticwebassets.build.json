@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "h2HLCIZxKbIM61UwVf8iowNiH0wN0emBo4EO6qwYeWE=",
+  "Source": "PNChatServer",
+  "BasePath": "_content/PNChatServer",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
