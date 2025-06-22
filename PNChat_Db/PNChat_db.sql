@@ -371,3 +371,8 @@ GO
 COMMIT;
 GO
 
+CREATE TABLE [dbo].[validator] (
+    phone_number VARCHAR(15) NOT NULL
+);
+GO
+

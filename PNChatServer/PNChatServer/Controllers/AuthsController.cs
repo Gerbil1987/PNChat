@@ -89,24 +89,32 @@ namespace PNChatServer.Controllers
         }
 
         [HttpGet("file")]
-        public async Task<IActionResult> DownloadFile(string key)
+        public IActionResult DownloadFile(string key)
         {
-            ResponseAPI responseAPI = new ResponseAPI();
-
             try
             {
-                //string path = Path.Combine(_webHostEnvironment.ContentRootPath, key);
-                //Stream stream = new FileStream(path, FileMode.Open);
-                responseAPI.Data = "";
-                BlobDto result = await _azureStorage.DownloadAsync(key);
-
-                return File(result.Content, result.ContentType, result.Name);
-                //return File(stream, "application/octet-stream", key);
+                // Serve from local wwwroot if file exists
+                if (!string.IsNullOrEmpty(key))
+                {
+                    var localPath = Path.Combine(_webHostEnvironment.WebRootPath, key.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                    if (System.IO.File.Exists(localPath))
+                    {
+                        var ext = Path.GetExtension(localPath).ToLower();
+                        var contentType = ext == ".png" ? "image/png" :
+                                          ext == ".jpg" || ext == ".jpeg" ? "image/jpeg" :
+                                          ext == ".gif" ? "image/gif" :
+                                          ext == ".pdf" ? "application/pdf" :
+                                          "application/octet-stream";
+                        var fileStream = System.IO.File.OpenRead(localPath);
+                        return File(fileStream, contentType, Path.GetFileName(localPath));
+                    }
+                }
+                // If not found locally, return 404
+                return NotFound();
             }
-            catch (Exception ex)
+            catch
             {
-                responseAPI.Message = ex.Message;
-                return BadRequest(responseAPI);
+                return BadRequest();
             }
         }
 

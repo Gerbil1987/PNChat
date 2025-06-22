@@ -39,23 +39,18 @@ export class MessageDetailComponent implements OnInit {
       console.log('messageHubListener:', data);
       this.getMessage();
     });
+    const self = this;
     $("#my-text").emojioneArea({
       events: {
         keydown: function (editor: any, event: KeyboardEvent) {
-          // No-op: handled below
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            self.sendMessage();
+          }
         }
       }
     });
-    // Attach keydown handler to emojioneArea editor for Enter key
-    setTimeout(() => {
-      $(document).off('keydown.emojionearea'); // Remove previous handler if any
-      $(document).on('keydown.emojionearea', '.emojionearea-editor', (event: any) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-          this.sendMessage();
-        }
-      });
-    }, 0);
+    $(document).off('keydown.emojionearea');
   }
 
   mess() {
@@ -263,11 +258,7 @@ export class MessageDetailComponent implements OnInit {
     });
   }
 
-  onImageInputChange(event: any) {
-    console.log('onImageInputChange fired', event);
-  }
-
-  onImageInputClicked() {
-    console.log('image input clicked');
-  }
+  // Remove these methods if not needed, or add empty stubs to fix the error
+  onImageInputChange(event: any) {}
+  onImageInputClicked() {}
 }

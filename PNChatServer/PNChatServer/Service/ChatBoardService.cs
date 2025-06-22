@@ -360,5 +360,31 @@ namespace PNChatServer.Service
                         }
                     }).ToListAsync();
         }
+
+        // Clear all messages for a group
+        public async Task ClearMessagesByGroup(string groupCode)
+        {
+            var messages = chatContext.Messages.Where(x => x.GroupCode == groupCode);
+            chatContext.Messages.RemoveRange(messages);
+            await chatContext.SaveChangesAsync();
+        }
+
+        // Clear all messages between two users (direct chat)
+        public async Task ClearMessagesByContact(string userCode, string contactCode)
+        {
+            // Find the group code for the direct chat
+            var groupCode = await chatContext.Groups
+                .Where(x => x.Type == Constants.GroupType.SINGLE)
+                .Where(x => x.GroupUsers.Any(y => y.UserCode == userCode) &&
+                            x.GroupUsers.Any(y => y.UserCode == contactCode))
+                .Select(x => x.Code)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrEmpty(groupCode))
+            {
+                var messages = chatContext.Messages.Where(x => x.GroupCode == groupCode);
+                chatContext.Messages.RemoveRange(messages);
+                await chatContext.SaveChangesAsync();
+            }
+        }
     }
 }
