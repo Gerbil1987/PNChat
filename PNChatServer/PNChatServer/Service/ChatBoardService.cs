@@ -343,7 +343,6 @@ namespace PNChatServer.Service
             await chatContext.SaveChangesAsync();
             try
             {
-                // Có thể tối ưu bằng cách chỉ gửi cho user trong nhóm chat
                await chatHub.Clients.All.SendAsync("messageHubListener", true);
             }
             catch (Exception ex)
@@ -351,13 +350,6 @@ namespace PNChatServer.Service
                 
             }
         }
-
-        /// <summary>
-        /// Lấy danh sách tin nhắn từ nhóm
-        /// </summary>
-        /// <param name="userCode">User hiện tại đang đăng nhập</param>
-        /// <param name="groupCode">Mã nhóm</param>
-        /// <returns>Danh sách tin nhắn</returns>
         public async Task<List<MessageDto>> GetMessageByGroup(string userCode, string groupCode)
         {
             return await chatContext.Messages
