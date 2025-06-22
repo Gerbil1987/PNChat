@@ -1,3 +1,9 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .body-vchat-left-header {
   display: flex;
   justify-content: space-between;
@@ -123,4 +129,71 @@
   height: 100%;
   margin-top: -25px;
   overflow: hidden;
+}
+
+/* --- Responsive chat layout for 1080p and up --- */
+.body-vchat {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@supports not (height: 100dvh) {
+  .body-vchat {
+    height: 100vh;
+  }
+}
+
+.body-vchat-main {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* no height here */
+}
+
+.body-vchat-left {
+  width: 240px;
+  min-width: 240px;
+  max-width: 400px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.body-vchat-right {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.box-message {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.box-message-send {
+  flex-shrink: 0;
+  /* This is your typing box, stays at the bottom */
+  min-height: 56px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  max-height: 100%;
+}
+
+.box-message-send * {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
 }

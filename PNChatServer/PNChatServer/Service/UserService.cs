@@ -61,46 +61,20 @@ namespace PNChatServer.Service
                 us.Dob = user.Dob;
                 us.Email = user.Email;
 
-                //var fileName = Guid.NewGuid().ToString() + ".jpg";
-
-                // Limpa o hash enviado
-                //var data = new Regex(@"^data:image\/[a-z]+;base64,").Replace(user.Avatar, "");
-
-                //// Gera um array de Bytes
-                //byte[] imageBytes = Convert.FromBase64String(data);
-                //string container = "blobcontainer";
-                //string blobconnect = "DefaultEndpointsProtocol=https;AccountName=pnchatstorage;AccountKey=kxdoY/j/U+Bg3MGLMzFavw40hz575PPP3sEFYzCuOJxjHrCUf9an0Of0WyOwfNNk1y+51U0HTGAG+AStitfbbQ==;EndpointSuffix=core.windows.net";
-                //// Define o BLOB no qual a imagem será armazenada
-                //var blobClient = new BlobClient(blobconnect, container, fileName);
-
-                //// Envia a imagem
-                //using (var stream = new MemoryStream(imageBytes))
-                //{
-                //    await blobClient.UploadAsync(stream);
-                //}
-
-                ////Retorna a URL da imagem
-                //var urlImg = blobClient.Uri.AbsoluteUri;
-                if (user.Avatar.Contains("data:image/png;base64,"))
+                if (user.Avatar != null && user.Avatar.Contains("data:image/png;base64,"))
                 {
                     var fileName = Guid.NewGuid().ToString() + ".jpg";
-                    //string pathAvatar = $"Resource/Avatar/{Guid.NewGuid().ToString("N")}";
-                    //string pathFile = Path.Combine(webHostEnvironment.ContentRootPath, pathAvatar);
-                    //DataHelpers.Base64ToImage(user.Avatar.Replace("data:image/png;base64,", ""), pathFile);
                     var data = user.Avatar.Replace("data:image/png;base64,", "");
                     byte[] imageBytes = Convert.FromBase64String(data);
-                    string container = "blobcontainer";
-                    string blobconnect = "DefaultEndpointsProtocol=https;AccountName=pnchatstorage;AccountKey=kxdoY/j/U+Bg3MGLMzFavw40hz575PPP3sEFYzCuOJxjHrCUf9an0Of0WyOwfNNk1y+51U0HTGAG+AStitfbbQ==;EndpointSuffix=core.windows.net";
-                    //// Define o BLOB no qual a imagem será armazenada
-                    var blobClient = new BlobClient(blobconnect, container, fileName);
-
-                    //// Envia a imagem
-                    using (var stream = new MemoryStream(imageBytes))
+                    string imagesFolder = Path.Combine(webHostEnvironment.WebRootPath, "images");
+                    if (!Directory.Exists(imagesFolder))
                     {
-                        await blobClient.UploadAsync(stream);
+                        Directory.CreateDirectory(imagesFolder);
                     }
-                    var urlImg = blobClient.Uri.AbsoluteUri;
-
+                    string filePath = Path.Combine(imagesFolder, fileName);
+                    await File.WriteAllBytesAsync(filePath, imageBytes);
+                    // Set the Avatar URL to the local static file path
+                    string urlImg = $"/images/{fileName}";
                     us.Avatar = user.Avatar = urlImg;
                 }
                 us.Address = user.Address;

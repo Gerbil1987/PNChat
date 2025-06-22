@@ -126,7 +126,7 @@ export class HomeComponent implements OnInit {
   submitAddContact(contact: any) {
     this.userService.addContact(contact).subscribe({
       next: (response: any) => {
-        this.toastr.success('Thêm thành công');
+        this.toastr.success('Contact added succesfully', 'Add contact');
         $('#modalAddContact').modal('hide');
         this.listContact.getContact();
       },

@@ -191,3 +191,4 @@ C:\Users\ricoh\Desktop\Code\PN-Chat.git\PNChatServer\PNChatServer\obj\Debug\net6
 C:\Users\ricoh\Desktop\Code\PN-Chat.git\PNChatServer\PNChatServer\obj\Debug\net6.0\PNChatServer.pdb
 C:\Users\ricoh\Desktop\Code\PN-Chat.git\PNChatServer\PNChatServer\obj\Debug\net6.0\PNChatServer.genruntimeconfig.cache
 C:\Users\ricoh\Desktop\Code\PN-Chat.git\PNChatServer\PNChatServer\obj\Debug\net6.0\ref\PNChatServer.dll
+C:\Users\ricoh\Desktop\Code\PN-Chat.git\PNChatServer\PNChatServer\bin\Debug\net6.0\PNChatServer.staticwebassets.runtime.json

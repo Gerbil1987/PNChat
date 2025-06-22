@@ -63,17 +63,24 @@ namespace PNChatServer.Controllers
         }
 
         [HttpGet("img")]
-        public async Task<IActionResult> DownloadImage(string key)
+        public IActionResult DownloadImage(string key)
         {
             try
             {
-                BlobDto result = await _azureStorage.DownloadAsync(key);
-
+                // If the key is a local path (not a full URL), serve from wwwroot/images
+                if (!string.IsNullOrEmpty(key) && !key.Contains("http"))
+                {
+                    var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, key.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                    if (!System.IO.File.Exists(imagePath))
+                        return NotFound();
+                    var ext = Path.GetExtension(imagePath).ToLower();
+                    var contentType = ext == ".png" ? "image/png" : "image/jpeg";
+                    var image = System.IO.File.OpenRead(imagePath);
+                    return File(image, contentType);
+                }
+                // Otherwise, try to download from Azure (legacy)
+                BlobDto result = _azureStorage.DownloadAsync(key).GetAwaiter().GetResult();
                 return File(result.Content, result.ContentType);
-                //string path = Path.Combine(_webHostEnvironment.ContentRootPath, key);
-                //var image = System.IO.File.OpenRead(path);
-
-                //return File(image, "image/*");
             }
             catch (Exception ex)
             {
