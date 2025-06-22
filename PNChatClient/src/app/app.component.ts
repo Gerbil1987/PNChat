@@ -7,4 +7,11 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'PNChatClient';
+
+  ngOnInit() {
+    window.addEventListener('beforeunload', () => {
+      localStorage.clear();
+      // Optionally, you can also make a logout API call here if needed
+    });
+  }
 }
