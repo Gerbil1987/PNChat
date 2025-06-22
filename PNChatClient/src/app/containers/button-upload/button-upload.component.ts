@@ -16,8 +16,7 @@ import { PipeHostFilePipe } from 'src/app/core/pipe/pipe-host-file.pipe';
 })
 export class ButtonUploadComponent implements OnInit {
   @Input()
-  srcDefault: string =
-    'https://pnchatstorage.blob.core.windows.net/blobcontainer/no_image.jpg';
+  srcDefault: string = '/assets/images/no_image.jpg'; // Use local image for default
 
   @Output()
   onload = new EventEmitter<string>();
