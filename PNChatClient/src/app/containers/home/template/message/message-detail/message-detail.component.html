@@ -16,10 +16,10 @@
                     </ng-container>
                 </div>
                 <div class="box-add-user-group">
-                    <span *ngIf="groupInfo != null && !groupInfo.IsGroup" (click)="callVideo()" class="icon-control"
-                        title="Gọi video">
+                    <!--span *ngIf="groupInfo != null && !groupInfo.IsGroup" (click)="callVideo()" class="icon-control"
+                        title="Video calling">
                         <i class="mdi mdi-video-outline"></i>
-                    </span>
+                    </span-->
                     <span (click)="toggleContact()" class="icon-control contact-control" title="Thông tin hội thoại">
                         <i class="mdi mdi-dots-vertical"></i>
                     </span>
@@ -90,17 +90,15 @@
             <div class="box-chat-send">
                 <div class="box-chat-send-media">
                     <span class="mr-1">
-                        <i onclick="$('#file_attach_upload').click()" class="mdi mdi-attachment"></i>
-                        <input type='file' [hidden]="true" (change)="sendFile($event)" id="file_attach_upload"
+                        <input type='file' #fileInput [hidden]="true" (change)="sendFile($event)" id="file_attach_upload"
                             accept=".xlsx,.xls,.csv,.doc,.docx">
+                        <i (click)="fileInput.click()" class="mdi mdi-attachment"></i>
                     </span>
                     <span>
-                        <i onclick="$('#image_attach_upload').click()" class="mdi mdi-camera"></i>
-                        <input type='file' [hidden]="true" (change)="sendImage($event)" id="image_attach_upload"
+                        <input type='file' #imageInput [hidden]="true" (change)="sendImage($event); onImageInputChange($event)" (click)="onImageInputClicked()" id="image_attach_upload"
                             accept=".gif,.jpg,.jpeg,.png">
+                        <i (click)="imageInput.click()" class="mdi mdi-camera"></i>
                     </span>
-
-
                 </div>
                 <div class="box-chat-send-text" (keypress)="onKeydown($event)">
                         <textarea id="my-text" (keydown)="onKeydown($event)" [(ngModel)]="textMessage" class="form-control" rows="1" placeholder="Type message here...">

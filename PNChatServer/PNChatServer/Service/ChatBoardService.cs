@@ -215,24 +215,17 @@ namespace PNChatServer.Service
             {
                 if (group.Avatar.Contains("data:image/png;base64,"))
                 {
-                    //string pathAvatar = $"Resource/Avatar/{Guid.NewGuid().ToString("N")}";
-                    //string pathFile = Path.Combine(webHostEnvironment.ContentRootPath, pathAvatar);
-                    //DataHelpers.Base64ToImage(group.Avatar.Replace("data:image/png;base64,", ""), pathFile);
-
-                    var fileName = Guid.NewGuid().ToString() + ".jpg";
+                    var fileName = Guid.NewGuid().ToString("N") + ".jpg";
                     var data = group.Avatar.Replace("data:image/png;base64,", "");
                     byte[] imageBytes = Convert.FromBase64String(data);
-                    string container = "blobcontainer";
-                    string blobconnect = "DefaultEndpointsProtocol=https;AccountName=pnchatstorage;AccountKey=kxdoY/j/U+Bg3MGLMzFavw40hz575PPP3sEFYzCuOJxjHrCUf9an0Of0WyOwfNNk1y+51U0HTGAG+AStitfbbQ==;EndpointSuffix=core.windows.net";
-
-                    var blobClient = new BlobClient(blobconnect, container, fileName);
-
-                    using (var stream = new MemoryStream(imageBytes))
+                    string localDir = Path.Combine(webHostEnvironment.WebRootPath, "avatars");
+                    FileHelper.CreateDirectory(localDir);
+                    string localPath = Path.Combine(localDir, fileName);
+                    using (var stream = new FileStream(localPath, FileMode.Create))
                     {
-                        await blobClient.UploadAsync(stream);
+                        await stream.WriteAsync(imageBytes, 0, imageBytes.Length);
                     }
-                    var urlImg = blobClient.Uri.AbsoluteUri;
-
+                    var urlImg = $"/avatars/{fileName}";
                     grp.Avatar = group.Avatar = urlImg;
                 }
                 await chatContext.SaveChangesAsync();
@@ -311,28 +304,25 @@ namespace PNChatServer.Service
             // Nếu tin nhắn có file => lưu file
             if (message.Attachments != null && message.Attachments.Count > 0)
             {
-                string path = Path.Combine(webHostEnvironment.ContentRootPath, $"Resource/Attachment/{DateTime.Now.Year}");
-                FileHelper.CreateDirectory(path);
+                string year = DateTime.Now.Year.ToString();
+                string localDir = Path.Combine(webHostEnvironment.WebRootPath, "attachments", year);
+                FileHelper.CreateDirectory(localDir);
                 try
                 {
                     if (message.Attachments[0].Length > 0)
                     {
-                        string pathFile = path + "/" + message.Attachments[0].FileName;
-                        if (!File.Exists(pathFile))
+                        string fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(message.Attachments[0].FileName);
+                        string localPath = Path.Combine(localDir, fileName);
+                        using (var stream = new FileStream(localPath, FileMode.Create))
                         {
-                            using (var stream = new MemoryStream())
-                            {
-                                await message.Attachments[0].CopyToAsync(stream);
-                                await UploadBlobFile(message.Attachments[0]);
-                            }
+                            await message.Attachments[0].CopyToAsync(stream);
                         }
                         message.Content = message.Attachments[0].FileName;
-                        message.Path = $"https://pnchatstorage.blob.core.windows.net/{_storageContainerName}/{message.Attachments[0].FileName}";
+                        message.Path = $"/attachments/{year}/{fileName}";
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
-                    ExceptionDispatchInfo.Capture(ex).Throw();
                     throw;
                 }
             }

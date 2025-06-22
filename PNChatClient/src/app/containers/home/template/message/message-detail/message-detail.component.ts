@@ -40,14 +40,22 @@ export class MessageDetailComponent implements OnInit {
       this.getMessage();
     });
     $("#my-text").emojioneArea({
-
       events: {
         keydown: function (editor: any, event: KeyboardEvent) {
-          console.log('event:keydown');
+          // No-op: handled below
         }
       }
-
-  });
+    });
+    // Attach keydown handler to emojioneArea editor for Enter key
+    setTimeout(() => {
+      $(document).off('keydown.emojionearea'); // Remove previous handler if any
+      $(document).on('keydown.emojionearea', '.emojionearea-editor', (event: any) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          this.sendMessage();
+        }
+      });
+    }, 0);
   }
 
   mess() {
@@ -104,10 +112,9 @@ export class MessageDetailComponent implements OnInit {
   }
 
   onKeydown(event: KeyboardEvent) {
-    if (!event.shiftKey && event.code == 'Enter') {
-      this.sendMessage();
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-
+      this.sendMessage();
     }
   }
 
@@ -140,7 +147,10 @@ export class MessageDetailComponent implements OnInit {
 
 
   sendFile(event: any) {
-    if (event.target.files && event.target.files[0]) {
+    const isGroup = !!this.group;
+    const sendTo = isGroup ? '' : (this.contact && this.contact.Code ? this.contact.Code : '');
+    if (event.target.files && event.target.files[0] && (isGroup || sendTo)) {
+      console.log('sendFile called', event.target.files, 'sendTo', sendTo, 'isGroup', isGroup);
       let filesToUpload: any[] = [];
       for (let i = 0; i < event.target.files.length; i++) {
         filesToUpload.push(event.target.files[i]);
@@ -149,27 +159,32 @@ export class MessageDetailComponent implements OnInit {
       Array.from(filesToUpload).map((file, index) => {
         formData.append('files', file, file.name);
       });
-
+      const contentValue = this.textMessage && this.textMessage.trim() !== '' ? this.textMessage.trim() : 'file';
       formData.append(
         'data',
         JSON.stringify({
-          SendTo: this.contact == null ? '' : this.contact.Code,
-          Content: this.textMessage.trim(),
+          SendTo: sendTo,
+          Content: contentValue,
           Type: 'attachment',
         })
       );
-
       this.chatBoardService
-        .sendMessage(this.group == null ? '' : this.group.Code, formData)
+        .sendMessage(isGroup ? this.group.Code : '', formData)
         .subscribe({
           next: (response: any) => (this.textMessage = ''),
           error: (error) => console.log('error: ', error),
         });
+      // Reset input value so (change) will fire even for the same file
+      event.target.value = '';
     }
   }
 
   sendImage(event: any) {
-    if (event.target.files && event.target.files[0]) {
+    const isGroup = !!this.group;
+    const sendTo = isGroup ? '' : (this.contact && this.contact.Code ? this.contact.Code : '');
+    console.log('sendImage: contact', this.contact, 'contact.Code', this.contact && this.contact.Code, 'sendTo', sendTo, 'isGroup', isGroup);
+    if (event.target.files && event.target.files[0] && (isGroup || sendTo)) {
+      console.log('sendImage called', event.target.files, 'sendTo', sendTo, 'isGroup', isGroup);
       let filesToUpload: any[] = [];
       for (let i = 0; i < event.target.files.length; i++) {
         filesToUpload.push(event.target.files[i]);
@@ -178,22 +193,23 @@ export class MessageDetailComponent implements OnInit {
       Array.from(filesToUpload).map((file, index) => {
         formData.append('files', file, file.name);
       });
-
+      const contentValue = this.textMessage && this.textMessage.trim() !== '' ? this.textMessage.trim() : 'image';
       formData.append(
         'data',
         JSON.stringify({
-          SendTo: this.contact == null ? '' : this.contact.Code,
-          Content: this.textMessage.trim(),
+          SendTo: sendTo,
+          Content: contentValue,
           Type: 'media',
         })
       );
-
       this.chatBoardService
-        .sendMessage(this.group == null ? '' : this.group.Code, formData)
+        .sendMessage(isGroup ? this.group.Code : '', formData)
         .subscribe({
           next: (response: any) => (this.textMessage = ''),
           error: (error) => console.log('error: ', error),
         });
+      // Reset input value so (change) will fire even for the same file
+      event.target.value = '';
     }
   }
 
@@ -245,5 +261,13 @@ export class MessageDetailComponent implements OnInit {
       },
       error: (error) => console.log('error: ', error),
     });
+  }
+
+  onImageInputChange(event: any) {
+    console.log('onImageInputChange fired', event);
+  }
+
+  onImageInputClicked() {
+    console.log('image input clicked');
   }
 }
