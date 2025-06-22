@@ -257,6 +257,8 @@ label {
 
 .main-box-chat {
   display: flex;
+  padding-bottom: 1px;
+  height: calc(100vh - 1px);
 }
 
 .box-chat {
@@ -739,4 +741,35 @@ label {
 .list-member-in-group::-webkit-scrollbar-thumb {
   background: #cccccc;
   border-radius: 5px;
+}
+
+@media (max-width: 900px) {
+  .box-contact-info {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 90vw;
+    max-width: 340px;
+    min-width: 0;
+    background: #fff;
+    z-index: 2000;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    display: block;
+  }
+  .box-contact-info-opened .box-contact-info {
+    transform: translateX(0);
+  }
+  .contact-info-mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1999;
+  }
+  .box-contact-info-opened .contact-info-mobile-overlay {
+    display: block;
+  }
 }

@@ -2,7 +2,7 @@
     <app-default [title]="'Message'"></app-default>
 </div>
 <div [hidden]="group == null && contact == null">
-    <div class="main-box-chat">
+    <div class="main-box-chat" [class.box-contact-info-opened]="isContactInfoOpen">
         <div class="box-chat">
             <div class="box-chat-header">
                 <div class="box-avatar">
@@ -123,6 +123,8 @@
                 </div>
             </div>
         </div>
+        <!-- Contact info overlay for mobile -->
+        <div class="contact-info-mobile-overlay" (click)="closeContactInfo()"></div>
         <div class="box-contact-info">
             <ng-container *ngIf="groupInfo != null">
                 <ng-container *ngIf="groupInfo.IsGroup">

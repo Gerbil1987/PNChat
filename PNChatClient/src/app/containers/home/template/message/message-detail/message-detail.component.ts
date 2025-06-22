@@ -24,7 +24,7 @@ export class MessageDetailComponent implements OnInit {
   messages: Message[] = [];
   textMessage: string = '';
   groupInfo: any = null;
-
+  isContactInfoOpen = false;
 
   constructor(
     private callService: CallService,
@@ -96,11 +96,11 @@ export class MessageDetailComponent implements OnInit {
   }
 
   toggleContact() {
-    if ($('.main-box-chat').hasClass('box-contact-info-opened')) {
-      $('.main-box-chat').removeClass('box-contact-info-opened');
-    } else {
-      $('.main-box-chat').addClass('box-contact-info-opened');
-    }
+    this.isContactInfoOpen = !this.isContactInfoOpen;
+  }
+
+  closeContactInfo() {
+    this.isContactInfoOpen = false;
   }
 
   onKeydown(event: KeyboardEvent) {
