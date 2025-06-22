@@ -12,7 +12,7 @@ export class ChatDatePipe implements PipeTransform {
     const dateCompare = moment(value).toDate();
     const isSameDay = currentDate.toDateString() === dateCompare.toDateString();
 
-    const formatString = isSameDay ? 'h:mm a' : 'ddd DD/MM [Lúc] h:mm a';
-    return moment(value).locale('vi').add(7, 'hours').format(formatString);
+    const formatString = isSameDay ? 'HH:mm' : 'ddd DD/MM HH:mm';
+    return moment(value).locale('vi').format(formatString);
   }
 }
