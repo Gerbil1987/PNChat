@@ -1,6 +1,11 @@
 <div class="body-vchat">
+  <!-- Hamburger menu button (mobile only) -->
+  <button class="hamburger" (click)="isLeftOpen = !isLeftOpen" aria-label="Open menu">
+    <span></span>
+  </button>
+  <div class="mobile-overlay" [class.open]="isLeftOpen" (click)="isLeftOpen = false"></div>
   <div class="body-vchat-main">
-    <div class="body-vchat-left">
+    <div class="body-vchat-left" [class.open]="isLeftOpen">
         <div *ngIf="currentUser !=null" class="body-vchat-left-header">
             <div (click)="openModalProfile()" class="box-avatar">
                 <img [src]="currentUser.Avatar | pipeHostFile">

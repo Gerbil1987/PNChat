@@ -279,6 +279,15 @@ label {
   background: white;
 }
 
+.box-chat-header {
+  padding-left: 48px !important; /* Add left padding to move all content, including avatar, right of the hamburger */
+}
+
+.box-chat-header .box-avatar,
+.box-chat-header .box-avatar img {
+  margin-left: 0 !important; /* Remove any extra margin so avatar aligns with new padding */
+}
+
 .box-chat-body {
   height: calc(100vh - 76px - 63px);
   background-image: url(/assets/images/lofi-bg.jpg);

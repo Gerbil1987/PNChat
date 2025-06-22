@@ -63,6 +63,8 @@ export class HomeComponent implements OnInit {
     groupCall: null,
   };
 
+  isLeftOpen = false;
+
   constructor(
     private authService: AuthenticationService,
     private callService: CallService,

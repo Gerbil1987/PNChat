@@ -197,3 +197,98 @@ html, body {
   padding: 0 !important;
   box-sizing: border-box;
 }
+
+/* Hamburger menu for mobile */
+.hamburger {
+  display: none;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.hamburger span,
+.hamburger span:before,
+.hamburger span:after {
+  display: block;
+  position: absolute;
+  width: 28px;
+  height: 4px;
+  background: #063261;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+.hamburger span {
+  top: 14px;
+  left: 2px;
+}
+.hamburger span:before {
+  content: '';
+  top: -10px;
+}
+.hamburger span:after {
+  content: '';
+  top: 10px;
+}
+
+/* Mobile styles: hide left tab by default, overlay when open */
+@media (max-width: 900px) {
+  .body-vchat-left {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 80vw;
+    max-width: 320px;
+    min-width: 0;
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .body-vchat-left.open {
+    transform: translateX(0);
+  }
+  .body-vchat-right {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100vw;
+  }
+  .body-vchat-main {
+    position: relative;
+  }
+  .hamburger {
+    display: block;
+  }
+  /* Optional: dark overlay when menu is open */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 999;
+  }
+  .mobile-overlay.open {
+    display: block;
+  }
+  .body-vchat-left-header .box-avatar,
+  .message-detail-header .box-avatar,
+  .message-detail-header .chat-avatar,
+  .box-chat-header .box-avatar,
+  .box-chat-header .box-avatar img {
+    margin-left: 48px !important;
+  }
+  .box-chat-header img,
+  .box-chat-header .avatar,
+  .box-chat-header .box-avatar,
+  .box-chat-header .box-avatar img {
+    margin-left: 48px !important;
+    left: 48px !important;
+    position: relative !important;
+  }
+}
