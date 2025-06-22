@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { saveAs } from 'file-saver';
 
 import { Message } from 'src/app/core/models/message';
@@ -19,12 +19,21 @@ declare const $: any;
 export class MessageDetailComponent implements OnInit {
   @Input() group!: any;
   @Input() contact!: User;
+  @Output() addUserToGroup = new EventEmitter<any>();
 
   currentUser: any = {};
   messages: Message[] = [];
   textMessage: string = '';
   groupInfo: any = null;
   isContactInfoOpen = false;
+  addUserModalOpen = false;
+  contactsToAdd: any[] = [];
+  selectedContactCode: string = '';
+  userToRemove: any = null;
+  showRemoveUserModal = false;
+  showDeleteMenu = false;
+  deleteMenuPosition = { x: 0, y: 0 };
+  selectedMessage: Message | null = null;
 
   constructor(
     private callService: CallService,
@@ -255,6 +264,87 @@ export class MessageDetailComponent implements OnInit {
         console.log('callVideo', data);
       },
       error: (error) => console.log('error: ', error),
+    });
+  }
+
+  setCursorToStart(event: any) {
+    const textarea = event.target;
+    if (textarea && textarea.setSelectionRange) {
+      setTimeout(() => textarea.setSelectionRange(0, 0), 0);
+    }
+  }
+
+  openAddUserToGroup() {
+    // Fetch contacts not already in the group
+    this.addUserToGroup.emit({ group: this.groupInfo });
+  }
+
+  closeAddUserModal() {
+    this.addUserModalOpen = false;
+    this.selectedContactCode = '';
+  }
+
+  addSelectedContactToGroup() {
+    if (!this.selectedContactCode) return;
+    this.chatBoardService.addUserToGroup(this.groupInfo.Code, this.selectedContactCode).subscribe({
+      next: () => {
+        this.closeAddUserModal();
+        this.getChatBoardInfo(); // Refresh group info
+      },
+      error: () => {
+        alert('Failed to add user to group');
+      }
+    });
+  }
+
+  canRemoveUser(member: any): boolean {
+    // Only allow removing if not the current user (or add admin logic here)
+    return this.currentUser?.User !== member.Code;
+  }
+
+  confirmRemoveUser(member: any) {
+    this.userToRemove = member;
+    this.showRemoveUserModal = true;
+  }
+
+  removeUserFromGroup() {
+    if (!this.userToRemove) return;
+    this.chatBoardService.removeUserFromGroup(this.groupInfo.Code, this.userToRemove.Code).subscribe({
+      next: () => {
+        this.showRemoveUserModal = false;
+        this.userToRemove = null;
+        this.getChatBoardInfo(); // Refresh group info
+      },
+      error: () => {
+        alert('Failed to remove user from group');
+      }
+    });
+  }
+
+  onMessageRightClick(event: MouseEvent, message: Message) {
+    event.preventDefault();
+    this.showDeleteMenu = true;
+    this.deleteMenuPosition = { x: event.clientX, y: event.clientY };
+    this.selectedMessage = message;
+    document.addEventListener('click', this.closeDeleteMenu);
+  }
+
+  closeDeleteMenu = () => {
+    this.showDeleteMenu = false;
+    this.selectedMessage = null;
+    document.removeEventListener('click', this.closeDeleteMenu);
+  };
+
+  deleteMessage(message: Message) {
+    this.showDeleteMenu = false;
+    if (!message) return;
+    this.chatBoardService.deleteMessage(message.Id).subscribe({
+      next: () => {
+        this.getMessage();
+      },
+      error: (err) => {
+        alert('Failed to delete message: ' + (err?.error?.message || err));
+      }
     });
   }
 

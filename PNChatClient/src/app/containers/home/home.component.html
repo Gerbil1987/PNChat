@@ -13,16 +13,16 @@
             </div>
             <div class="box-fullname"><span>{{currentUser.FullName.split(' ').pop()}}</span></div>
             <div class="box-add-user-group">
-                <span (click)="openModalAddContact()" class="icon-control" title="Thêm liên hệ">
+                <span (click)="openModalAddContact()" class="icon-control" title="Add Contact">
                     <i class="mdi mdi-account-plus"></i>
                 </span>
-                <span (click)="openModalAddGroup()" class="icon-control" title="Tạo nhóm">
+                <span (click)="openModalAddGroup()" class="icon-control" title="Create Group">
                     <i class="mdi mdi-account-group"></i>
                 </span>
             </div>
         </div>
         <div class="tab-header">
-            <div *ngFor="let item of tabControls; index as index" class="tab-icon"
+            <div *ngFor="let item of tabControls, index as index" class="tab-icon"
                 [ngClass]="{'active': tabIndexSelected == index}">
                 <div (click)="clickTab(index)">
                     <i [class]="'mdi ' + item.iconClass"></i>
@@ -47,7 +47,7 @@
     </div>
     <div [ngSwitch]="tabIndexSelected" class="body-vchat-right">
         <div *ngSwitchCase="0">
-            <app-message-detail [group]="filter.group"></app-message-detail>
+            <app-message-detail [group]="filter.group" (addUserToGroup)="onAddUserToGroup($event)"></app-message-detail>
         </div>
         <div *ngSwitchCase="1">
             <app-call-detail [groupCall]="filter.groupCall"></app-call-detail>
@@ -122,12 +122,12 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <h5 class="modal-title">Create Groups</h5>
+                <h5 class="modal-title">{{ isAddUserToGroupMode ? 'Add User to Group' : 'Create Groups' }}</h5>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="mb-3">
+                        <div class="mb-3" *ngIf="!isAddUserToGroupMode">
                             <input [(ngModel)]="filter.groupName" type="text" class="form-control"
                                 placeholder="Group name">
                         </div>
@@ -170,8 +170,11 @@
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
                         Cancel
                     </button>
-                    <button (click)="submitAddGroup()" type="button" class="btn btn-primary btn-sm">
+                    <button *ngIf="!isAddUserToGroupMode" (click)="submitAddGroup()" type="button" class="btn btn-primary btn-sm">
                         Create Groups
+                    </button>
+                    <button *ngIf="isAddUserToGroupMode" (click)="submitAddUserToGroup()" type="button" class="btn btn-primary btn-sm">
+                        Add Selected Users
                     </button>
                 </div>
             </div>

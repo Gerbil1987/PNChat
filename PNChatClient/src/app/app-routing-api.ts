@@ -14,6 +14,9 @@ export class AppRoutingApi {
     static GetMessageByGroup = environment.apiUrl + "chatBoards/get-message-by-group";
     static GetMessageByContact = environment.apiUrl + "chatBoards/get-message-by-contact";
     static UpdateGroupAvatar = environment.apiUrl + "chatBoards/update-group-avatar";
+    static AddUserToGroup = environment.apiUrl + "chatBoards/add-user-to-group";
+    static RemoveUserFromGroup = environment.apiUrl + "chatBoards/remove-user-from-group";
+    static DeleteMessage = environment.apiUrl + "chatBoards/delete-message";
 
     static GetCallHistory = environment.apiUrl + "calls/get-history";
     static GetCallHistoryById = environment.apiUrl + "calls/get-history";

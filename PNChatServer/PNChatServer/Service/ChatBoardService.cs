@@ -64,6 +64,7 @@ namespace PNChatServer.Service
                 group.LastMessage = await chatContext.Messages
                     .Where(x => x.GroupCode.Equals(group.Code))
                     .OrderByDescending(x => x.Created)
+                    .Where(x => x.Content != "[deleted]")
                     .Select(x => new MessageDto()
                     {
                         Created = x.Created,
@@ -359,6 +360,37 @@ namespace PNChatServer.Service
                             Avatar = x.UserCreatedBy.Avatar
                         }
                     }).ToListAsync();
+        }
+        public async Task AddUserToGroup(string groupCode, string userCode)
+        {
+            var group = await chatContext.Groups.Include(g => g.GroupUsers).FirstOrDefaultAsync(g => g.Code == groupCode);
+            if (group == null)
+                throw new Exception("Group not found");
+            if (group.GroupUsers.Any(gu => gu.UserCode == userCode))
+                throw new Exception("User already in group");
+            group.GroupUsers.Add(new GroupUser { GroupCode = groupCode, UserCode = userCode });
+            await chatContext.SaveChangesAsync();
+        }
+        public async Task RemoveUserFromGroup(string groupCode, string userCode)
+        {
+            var group = await chatContext.Groups.Include(g => g.GroupUsers).FirstOrDefaultAsync(g => g.Code == groupCode);
+            if (group == null)
+                throw new Exception("Group not found");
+            var groupUser = group.GroupUsers.FirstOrDefault(gu => gu.UserCode == userCode);
+            if (groupUser == null)
+                throw new Exception("User not in group");
+            group.GroupUsers.Remove(groupUser);
+            await chatContext.SaveChangesAsync();
+        }
+        public async Task DeleteMessage(string userSession, long messageId)
+        {
+            var message = await chatContext.Messages.FirstOrDefaultAsync(m => m.Id == messageId);
+            if (message == null)
+                throw new Exception("Message not found");
+            if (message.CreatedBy != userSession)
+                throw new Exception("You can only delete your own messages");
+            chatContext.Messages.Remove(message);
+            await chatContext.SaveChangesAsync();
         }
     }
 }

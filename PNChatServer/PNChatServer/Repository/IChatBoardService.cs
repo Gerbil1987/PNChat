@@ -11,5 +11,8 @@ namespace PNChatServer.Repository
         Task SendMessage(string userCode, string groupCode, MessageDto message);
         Task<List<MessageDto>> GetMessageByGroup(string userCode, string groupCode);
         Task<List<MessageDto>> GetMessageByContact(string userCode, string contactCode);
+        Task AddUserToGroup(string groupCode, string userCode);
+        Task RemoveUserFromGroup(string groupCode, string userCode);
+        Task DeleteMessage(string userSession, long messageId);
     }
 }

@@ -55,4 +55,20 @@ export class ChatBoardService {
     updateGroupAvatar(group: any) {
         return this.http.put(AppRoutingApi.UpdateGroupAvatar, group);
     }
+
+    getContacts() {
+        return this.http.get(AppRoutingApi.GetContact);
+    }
+
+    addUserToGroup(groupCode: string, userCode: string) {
+        return this.http.post(AppRoutingApi.AddUserToGroup, { groupCode, userCode });
+    }
+
+    removeUserFromGroup(groupCode: string, userCode: string) {
+        return this.http.post(AppRoutingApi.RemoveUserFromGroup, { groupCode, userCode });
+    }
+
+    deleteMessage(messageId: number) {
+        return this.http.delete(AppRoutingApi.DeleteMessage + '/' + messageId);
+    }
 }

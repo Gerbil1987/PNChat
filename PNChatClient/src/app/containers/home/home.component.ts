@@ -64,6 +64,9 @@ export class HomeComponent implements OnInit {
   };
 
   isLeftOpen = false;
+  isAddUserToGroupMode: boolean = false;
+  groupForAddUser: any = null;
+  contactsToAddToGroup: any[] = [];
 
   constructor(
     private authService: AuthenticationService,
@@ -98,6 +101,9 @@ export class HomeComponent implements OnInit {
 
   onClickMessage(group: any) {
     this.filter.group = group;
+    if (window.innerWidth <= 900) {
+      this.isLeftOpen = false;
+    }
   }
 
   onClickCall(groupCall: any) {
@@ -106,6 +112,9 @@ export class HomeComponent implements OnInit {
 
   onClickContact(contact: any) {
     this.filter.contact = contact;
+    if (window.innerWidth <= 900) {
+      this.isLeftOpen = false;
+    }
   }
 
   //#region add new contact
@@ -197,6 +206,7 @@ export class HomeComponent implements OnInit {
   //#region thêm mới nhóm chat
 
   openModalAddGroup() {
+    this.isAddUserToGroupMode = false;
     this.filter.groupName = '';
     this.userService.getContact().subscribe({
       next: (response: any) => {
@@ -262,7 +272,64 @@ export class HomeComponent implements OnInit {
       });
   }
 
-  //#endregion
+  onAddUserToGroup(event: any) {
+    this.isAddUserToGroupMode = true;
+    this.groupForAddUser = event.group;
+    // Fetch contacts not in the group
+    this.userService.getContact().subscribe({
+      next: (response: any) => {
+        const allContacts = JSON.parse(response['data']) || [];
+        const groupUserCodes = (this.groupForAddUser.Users || []).map((u: any) => u.Code);
+        this.contactsToAddToGroup = allContacts.filter((c: any) => !groupUserCodes.includes(c.Code));
+        this.memberInNewGroup = this.contactsToAddToGroup.map((c: any) => ({ ...c, fieldStamp1: false }));
+        $('#modalAddGroup').modal();
+      },
+      error: (error) => {
+        this.contactsToAddToGroup = [];
+        this.memberInNewGroup = [];
+        $('#modalAddGroup').modal();
+      }
+    });
+  }
+
+  submitAddUserToGroup() {
+    if (!this.groupForAddUser || this.memberInNewGroup.filter((x) => x.fieldStamp1).length === 0) {
+      this.toastr.error('Please select at least one user to add.', 'Add to group', { timeOut: 2000 });
+      return;
+    }
+    const usersToAdd = this.memberInNewGroup.filter((x) => x.fieldStamp1);
+    let addCount = 0;
+    let errorCount = 0;
+    usersToAdd.forEach((user, idx) => {
+      this.chatBoardService.addUserToGroup(this.groupForAddUser.Code, user.Code).subscribe({
+        next: () => {
+          addCount++;
+          if (addCount + errorCount === usersToAdd.length) {
+            this.finishAddUserToGroup();
+          }
+        },
+        error: () => {
+          errorCount++;
+          if (addCount + errorCount === usersToAdd.length) {
+            this.finishAddUserToGroup();
+          }
+        }
+      });
+    });
+  }
+
+  finishAddUserToGroup() {
+    $('#modalAddGroup').modal('hide');
+    this.isAddUserToGroupMode = false;
+    this.groupForAddUser = null;
+    this.contactsToAddToGroup = [];
+    this.memberInNewGroup = [];
+    // Refresh group info in message detail if possible
+    if (this.filter.group && typeof this.filter.group === 'object') {
+      this.filter.group = Object.assign({}, this.filter.group);
+    }
+    this.toastr.success('Users added to group.', 'Add to group', { timeOut: 2000 });
+  }
 
   openModalCall(url: any) {
     if (confirm('Incoming call from ' + url + '. Do you want to answer?')) {

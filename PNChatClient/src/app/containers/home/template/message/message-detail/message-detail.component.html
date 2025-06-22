@@ -20,7 +20,7 @@
                         title="Video calling">
                         <i class="mdi mdi-video-outline"></i>
                     </span-->
-                    <span (click)="toggleContact()" class="icon-control contact-control" title="Thông tin hội thoại">
+                    <span (click)="toggleContact()" class="icon-control contact-control" title="Contact information">
                         <i class="mdi mdi-dots-vertical"></i>
                     </span>
                 </div>
@@ -28,7 +28,7 @@
             <div #scroll [scrollTop]="scroll.scrollHeight" class="box-chat-body">
                 <div *ngIf="currentUser != null" class="box-message">
                     <div *ngFor="let item of messages; index as index">
-                        <div *ngIf="currentUser.User != item.CreatedBy" class="box-message-send">
+                        <div *ngIf="currentUser.User != item.CreatedBy" class="box-message-send" (contextmenu)="onMessageRightClick($event, item)">
                             <div class="box-message-img">
                                 <img [src]="item.UserCreatedBy.Avatar | pipeHostFile" alt="">
                             </div>
@@ -56,7 +56,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="currentUser.User == item.CreatedBy" class="box-message-received">
+                        <div *ngIf="currentUser.User == item.CreatedBy" class="box-message-received" (contextmenu)="onMessageRightClick($event, item)">
                             <div class="box-message-content">
                                 <div (click)="downloadFile(item.Path,item.Content)" *ngIf="item.Type != 'text'"
                                     class="box-message-download">
@@ -87,32 +87,21 @@
                     </div>
                 </div>
             </div>
-            <div class="box-chat-send">
-                <div class="box-chat-send-media">
-                    <span class="mr-1">
+            <div class="box-chat-send d-flex align-items-end">
+                <div class="box-chat-send-media d-flex flex-column align-items-start" style="margin-right: 12px; width: 24px; min-width: 24px;">
+                    <span class="mb-2" style="width: 24px; display: inline-flex; justify-content: center; align-items: center;">
                         <input type='file' #fileInput [hidden]="true" (change)="sendFile($event)" id="file_attach_upload"
                             accept=".xlsx,.xls,.csv,.doc,.docx">
-                        <i (click)="fileInput.click()" class="mdi mdi-attachment"></i>
+                        <i (click)="fileInput.click()" class="mdi mdi-attachment" style="font-size: 20px;"></i>
                     </span>
-                    <span>
+                    <span style="width: 24px; display: inline-flex; justify-content: center; align-items: center;">
                         <input type='file' #imageInput [hidden]="true" (change)="sendImage($event); onImageInputChange($event)" (click)="onImageInputClicked()" id="image_attach_upload"
                             accept=".gif,.jpg,.jpeg,.png">
-                        <i (click)="imageInput.click()" class="mdi mdi-camera"></i>
+                        <i (click)="imageInput.click()" class="mdi mdi-camera" style="font-size: 20px;"></i>
                     </span>
                 </div>
-                <div class="box-chat-send-text" (keypress)="onKeydown($event)">
-                        <textarea id="my-text" (keydown)="onKeydown($event)" [(ngModel)]="textMessage" class="form-control" rows="1" placeholder="Type message here...">
-                        </textarea>
-
-                        
-                            <!-- <button (click) ="toggleEmojiPicker()"> 😀</button>
-                            <emoji-mart *ngIf="showEmojiPicker"
-                                [showPreview]="false"
-                                (emojiClick)="addEmoji($event)"
-                                [isNative]="true"
-                                [showSingleCategory]="true">
-                            </emoji-mart> -->
-                    
+                <div class="box-chat-send-text flex-grow-1" style="margin-right: 12px; margin-left: 0;" (keypress)="onKeydown($event)">
+                    <textarea id="my-text" (keydown)="onKeydown($event)" [(ngModel)]="textMessage" class="form-control" rows="1" placeholder="Type message here..." (focus)="setCursorToStart($event)"></textarea>
                 </div>
                 <div (click)="sendMessage()" class="btn-send-message">
                     <span title="Send">
@@ -136,6 +125,9 @@
                             <input type='file' [hidden]="true" (change)="updateGroupAvatar($event)"
                                 id="image_group_upload" accept=".jpg,.jpeg,.png">
                         </div>
+                        <button class="btn btn-primary btn-sm mt-2" (click)="openAddUserToGroup(); isContactInfoOpen = false">
+                            <i class="mdi mdi-account-plus"></i> Add User
+                        </button>
                         <div>
                             <h6 style="display: block; margin: 0 auto;">
                                 {{groupInfo.FullName}}
@@ -147,14 +139,39 @@
                         <div class="mt-2 list-member-in-group">
                             <ul class="list-unstyled">
                                 <li *ngFor="let member of groupInfo.Users">
-                                    <div class="user-avatar">
-                                        <img [src]="member.Avatar | pipeHostFile"
-                                            style="margin-right: 10px !important;">
-                                        <span>{{member.FullName}}</span>
+                                    <div class="user-avatar d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <img [src]="member.Avatar | pipeHostFile" style="margin-right: 10px !important;">
+                                            <span>{{member.FullName}}</span>
+                                        </div>
+                                        <button *ngIf="canRemoveUser(member)" class="btn btn-danger btn-sm ml-2 rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px; min-width:32px; min-height:32px; padding:0;" (click)="confirmRemoveUser(member)" title="Remove user">
+    <i class="mdi mdi-close" style="font-size: 20px; margin: 0 auto;"></i>
+</button>
                                     </div>
                                 </li>
                             </ul>
                         </div>
+                        <!-- Remove User Confirmation Modal -->
+                        <div *ngIf="showRemoveUserModal" class="modal-backdrop fade show"></div>
+<div *ngIf="showRemoveUserModal" class="modal fade show d-block" id="removeUserModal" tabindex="-1" role="dialog" aria-labelledby="removeUserModalLabel" aria-modal="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeUserModalLabel">Confirm Remove User</h5>
+                <button type="button" class="close" (click)="showRemoveUserModal = false" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove <strong>{{userToRemove?.FullName}}</strong> from the group?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="showRemoveUserModal = false">Cancel</button>
+                <button type="button" class="btn btn-danger" (click)="removeUserFromGroup()">Yes, Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
                 </ng-container>
                 <ng-container *ngIf="!groupInfo.IsGroup">
@@ -195,4 +212,34 @@
             </ng-container>
         </div>
     </div>
+</div>
+<!-- Add z-index and position for modal to ensure it appears above group info -->
+<style>
+  @media (max-width: 768px) {
+    #modalAddGroup.modal {
+      z-index: 2000 !important;
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.5);
+    }
+    #modalAddGroup .modal-dialog {
+      margin: 0 auto;
+      width: 95vw;
+      max-width: 500px;
+    }
+    #modalAddGroup .modal-content {
+      border-radius: 10px;
+    }
+  }
+</style>
+
+<!-- Context menu for deleting a message -->
+<div *ngIf="showDeleteMenu" [ngStyle]="{'position': 'fixed', 'top.px': deleteMenuPosition.y, 'left.px': deleteMenuPosition.x, 'z-index': 9999}" class="context-menu">
+  <button class="btn btn-danger btn-sm" (click)="deleteMessage(selectedMessage!)" [disabled]="!selectedMessage">Delete</button>
 </div>

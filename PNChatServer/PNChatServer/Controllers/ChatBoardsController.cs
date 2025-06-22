@@ -172,5 +172,57 @@ namespace PNChatServer.Controllers
                 return BadRequest(responseAPI);
             }
         }
+
+        [Route("add-user-to-group")]
+        [HttpPost]
+        public async Task<IActionResult> AddUserToGroup([FromBody] AddUserToGroupDto data)
+        {
+            ResponseAPI responseAPI = new ResponseAPI();
+            try
+            {
+                await _chatBoardService.AddUserToGroup(data.GroupCode, data.UserCode);
+                return Ok(responseAPI);
+            }
+            catch (Exception ex)
+            {
+                responseAPI.Message = ex.Message;
+                return BadRequest(responseAPI);
+            }
+        }
+
+        [Route("remove-user-from-group")]
+        [HttpPost]
+        public async Task<IActionResult> RemoveUserFromGroup([FromBody] AddUserToGroupDto data)
+        {
+            ResponseAPI responseAPI = new ResponseAPI();
+            try
+            {
+                await _chatBoardService.RemoveUserFromGroup(data.GroupCode, data.UserCode);
+                return Ok(responseAPI);
+            }
+            catch (Exception ex)
+            {
+                responseAPI.Message = ex.Message;
+                return BadRequest(responseAPI);
+            }
+        }
+
+        [Route("delete-message/{messageId}")]
+        [HttpDelete]
+        public async Task<IActionResult> DeleteMessage(long messageId)
+        {
+            ResponseAPI responseAPI = new ResponseAPI();
+            try
+            {
+                string userSession = SystemAuthorization.GetCurrentUser(_contextAccessor);
+                await _chatBoardService.DeleteMessage(userSession, messageId);
+                return Ok(responseAPI);
+            }
+            catch (Exception ex)
+            {
+                responseAPI.Message = ex.Message;
+                return BadRequest(responseAPI);
+            }
+        }
     }
 }
