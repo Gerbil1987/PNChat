@@ -33,14 +33,8 @@ namespace PNChatServer.Service
         }
 
 
-        /// <summary>
-        /// Danh sách lịch sử chat
-        /// </summary>
-        /// <param name="userSession">User hiện tại đang đăng nhập</param>
-        /// <returns>Danh sách lịch sử chat</returns>
         public async Task<List<GroupDto>> GetHistory(string userSession)
         {
-            //Lấy danh sách nhóm chat
             List<GroupDto> groups = await chatContext.Groups
                     .Where(x => x.GroupUsers.Any(y => y.UserCode.Equals(userSession)))
                     .Select(x => new GroupDto()
@@ -60,7 +54,6 @@ namespace PNChatServer.Service
 
             foreach (var group in groups)
             {
-                //Nếu nhóm chat có type = SINGLE (chat 1-1) => đổi tên nhóm chat thành tên người chat cùng
                 if (group.Type == Constants.GroupType.SINGLE)
                 {
                     var us = group.Users.FirstOrDefault(x => !x.Code.Equals(userSession));
@@ -68,7 +61,6 @@ namespace PNChatServer.Service
                     group.Avatar = us?.Avatar;
                 }
 
-                // Lấy tin nhắn gần nhất để hiển thị
                 group.LastMessage = await chatContext.Messages
                     .Where(x => x.GroupCode.Equals(group.Code))
                     .OrderByDescending(x => x.Created)
@@ -87,20 +79,10 @@ namespace PNChatServer.Service
             return groups.OrderByDescending(x => x.LastActive).ToList();
         }
 
-
-        /// <summary>
-        /// Thông tin nhóm chat
-        /// </summary>
-        /// <param name="userSession">User hiện tại đang đăng nhập</param>
-        /// <param name="groupCode">Mã nhóm</param>
-        /// <param name="contactCode">Người chat</param>
-        /// <returns></returns>
         public async Task<object> GetInfo(string userSession, string groupCode, string contactCode)
         {
-            //Lấy thông tin nhóm chat
             Group group = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(groupCode));
 
-            // nếu mã nhóm k tồn tại => thuộc loại chat 1-1 (Tự quy định) => Trả về thông tin người chat cùng
             if (group == null)
             {
                 return await chatContext.Users
@@ -122,7 +104,6 @@ namespace PNChatServer.Service
             }
             else
             {
-                // Nếu tồn tại nhóm chat + nhóm chat có type = SINGLE (Chat 1-1) => trả về thông tin người chat cùng
                 if (group.Type.Equals(Constants.GroupType.SINGLE))
                 {
                     string userCode = group.GroupUsers.FirstOrDefault(x => x.UserCode != userSession)?.UserCode;
@@ -145,7 +126,6 @@ namespace PNChatServer.Service
                 }
                 else
                 {
-                    // Nếu tồn tại nhóm chat + nhóm chat nhiều người => trả về thông tin nhóm chat + thành viên trong nhóm
                     return new
                     {
                         IsGroup = true,
@@ -166,11 +146,6 @@ namespace PNChatServer.Service
             }
         }
 
-        /// <summary>
-        /// Thêm mới nhóm chat
-        /// </summary>
-        /// <param name="userCode">User hiện tại đang đăng nhập</param>
-        /// <param name="group">Nhóm</param>
         public async Task AddGroup(string userCode, GroupDto group)
         {
             DateTime dateNow = DateTime.Now;
@@ -201,11 +176,6 @@ namespace PNChatServer.Service
             await chatContext.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Cập nhật ảnh đại diện của nhóm chat
-        /// </summary>
-        /// <param name="group">Nhóm</param>
-        /// <returns></returns>
         public async Task<GroupDto> UpdateGroupAvatar(GroupDto group)
         {
             Group grp = await chatContext.Groups
@@ -250,19 +220,11 @@ namespace PNChatServer.Service
 
 
         }
-        /// <summary>
-        /// Gửi tin nhắn
-        /// </summary>
-        /// <param name="userCode">User hiện tại đang đăng nhập</param>
-        /// <param name="groupCode">Mã nhóm</param>
-        /// <param name="message">Tin nhắn</param>
         public async Task SendMessage(string userCode, string groupCode, MessageDto message)
         {
-            // Lấy thông tin nhóm chat
             Group grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(groupCode));
             DateTime dateNow = DateTime.Now;
 
-            // Nếu nhóm không tồn tại => cố gắng lấy thông tin nhóm đã từng chat giữa 2 người
             if (grp == null)
             {
                 string grpCode = await chatContext.Groups
@@ -275,7 +237,6 @@ namespace PNChatServer.Service
                 grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(grpCode));
             }
 
-            // Nếu nhóm vẫn không tồn tại => tạo nhóm chat mới có 2 thành viên
             if (grp == null)
             {
                 User sendTo = await chatContext.Users.FirstOrDefaultAsync(x => x.Code.Equals(message.SendTo));
@@ -301,7 +262,6 @@ namespace PNChatServer.Service
                 await chatContext.Groups.AddAsync(grp);
             }
 
-            // Nếu tin nhắn có file => lưu file
             if (message.Attachments != null && message.Attachments.Count > 0)
             {
                 string year = DateTime.Now.Year.ToString();
@@ -372,15 +332,8 @@ namespace PNChatServer.Service
                     }).ToListAsync();
         }
 
-        /// <summary>
-        /// Lấy danh sách tin nhắn với người đã liên hệ
-        /// </summary>
-        /// <param name="userCode">User hiện tại đang đăng nhập</param>
-        /// <param name="contactCode">Người nhắn cùng</param>
-        /// <returns></returns>
         public async Task<List<MessageDto>> GetMessageByContact(string userCode, string contactCode)
         {
-            // Lấy mã nhóm đã từng nhắn tin giữa 2 người
             string groupCode = await chatContext.Groups
                     .Where(x => x.Type.Equals(Constants.GroupType.SINGLE))
                     .Where(x => x.GroupUsers.Any(y => y.UserCode.Equals(userCode) &&
