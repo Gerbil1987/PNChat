@@ -78,6 +78,11 @@ namespace PNChatServer.Service
             if (await chatContext.Users.AnyAsync(x => x.UserName.Equals(user.UserName)))
                 throw new ArgumentException("Tài khoản đã tồn tại");
 
+            // Crusaders MC phone number validation
+            bool isValid = await chatContext.Validators.AnyAsync(v => v.PhoneNumber == user.Phone);
+            if (!isValid)
+                throw new ArgumentException("Only Crusaders MC members can register for this app");
+
             User newUser = new User()
             {
                 Code = Guid.NewGuid().ToString("N"),

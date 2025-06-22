@@ -99,7 +99,17 @@ export class LoginComponent implements OnInit {
           this.callFunLogin();
           console.log(response);
         },
-        error: (error) => this.toastr.error('Registration Failed'),
+        error: (error) => {
+          let errorMsg = 'Registration Failed';
+          if (error && error.error) {
+            if (typeof error.error === 'string') {
+              errorMsg = error.error;
+            } else if (error.error.message) {
+              errorMsg = error.error.message;
+            }
+          }
+          this.toastr.error(errorMsg);
+        },
       });
   }
 
