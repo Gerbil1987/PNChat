@@ -16,11 +16,8 @@
                     </ng-container>
                 </div>
                 <div class="box-add-user-group">
-                    <!--span *ngIf="groupInfo != null && !groupInfo.IsGroup" (click)="callVideo()" class="icon-control"
-                        title="Video calling">
-                        <i class="mdi mdi-video-outline"></i>
-                    </span-->
-                    <span (click)="toggleContact()" class="icon-control contact-control" title="Contact information">
+                    <!-- Only show kebab menu if in a group chat -->
+                    <span *ngIf="group != null && groupInfo?.IsGroup" (click)="toggleGroupMenu()" class="icon-control contact-control" title="Group options">
                         <i class="mdi mdi-dots-vertical"></i>
                     </span>
                 </div>
@@ -28,7 +25,7 @@
             <div #scroll [scrollTop]="scroll.scrollHeight" class="box-chat-body">
                 <div *ngIf="currentUser != null" class="box-message">
                     <div *ngFor="let item of messages; index as index">
-                        <div *ngIf="currentUser.User != item.CreatedBy" class="box-message-send" (contextmenu)="onMessageRightClick($event, item)">
+                        <div *ngIf="currentUser.User != item.CreatedBy" class="box-message-send">
                             <div class="box-message-img">
                                 <img [src]="item.UserCreatedBy.Avatar | pipeHostFile" alt="">
                             </div>
@@ -56,7 +53,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="currentUser.User == item.CreatedBy" class="box-message-received" (contextmenu)="onMessageRightClick($event, item)">
+                        <div *ngIf="currentUser.User == item.CreatedBy" class="box-message-received" (click)="item.showDelete = !item.showDelete">
+                            <!-- Red delete button to the left of the message bubble -->
+                            <button *ngIf="item.showDelete" (click)="deleteMessage(item); $event.stopPropagation();" class="btn btn-danger btn-sm ml-2 rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px; min-width:32px; min-height:32px; padding:0; margin-right:8px; align-self:center;">
+                                <i class="mdi mdi-delete" style="font-size: 20px; margin: 0 auto;"></i>
+                            </button>
                             <div class="box-message-content">
                                 <div (click)="downloadFile(item.Path,item.Content)" *ngIf="item.Type != 'text'"
                                     class="box-message-download">
@@ -237,5 +238,37 @@
                 </div>
             </ng-container>
         </ng-container>
+    </div>
+    <!-- Group menu slide-in panel -->
+    <div *ngIf="showGroupMenu" class="group-menu-overlay" (click)="toggleGroupMenu()"></div>
+    <div *ngIf="showGroupMenu" class="group-menu-panel slide-in">
+        <div class="group-menu-header d-flex justify-content-between align-items-center p-3 border-bottom">
+            <strong>Group Options</strong>
+            <button class="btn btn-link p-0 m-0" (click)="toggleGroupMenu()"><i class="mdi mdi-close"></i></button>
+        </div>
+        <div class="p-3">
+            <!-- SOS group: show Medical and Incident buttons -->
+            <ng-container *ngIf="groupInfo.Name === 'SOS'; else normalGroupButtons">
+                <button class="btn btn-danger btn-block mb-2" (click)="sendMedicalEmergency()">Medical</button>
+                <button class="btn btn-warning btn-block mb-3" style="background-color: #ffe066; color: #333; border-color: #ffe066;" (click)="sendIncidentReport()">Incident</button>
+            </ng-container>
+            <ng-template #normalGroupButtons>
+                <button class="btn btn-danger btn-block mb-2" (click)="leaveGroup(); toggleGroupMenu()">Leave Group</button>
+                <button class="btn btn-primary btn-block mb-3" (click)="openAddUserToGroup(); toggleGroupMenu()">Add User</button>
+            </ng-template>
+            <div class="group-members-list">
+                <strong>Members</strong>
+                <ul class="list-unstyled mt-2 mb-0">
+                    <li *ngFor="let member of groupInfo.Users" class="d-flex align-items-center" style="cursor:pointer;">
+                        <img [src]="member.Avatar | pipeHostFile" style="width:24px; height:24px; border-radius:50%; margin-right:8px;">
+                        <span>{{member.FullName}}</span>
+                        <!-- Hide remove button for SOS group -->
+                        <button *ngIf="member.Code !== currentUser.User && groupInfo.Name !== 'SOS'" class="btn btn-danger btn-sm ml-2 rounded-circle d-flex align-items-center justify-content-center" style="width:28px; height:28px; min-width:28px; min-height:28px; padding:0;" (click)="handleRemoveUser(member); $event.stopPropagation();" title="Remove user">
+                            <i class="mdi mdi-close" style="font-size: 18px; margin: 0 auto;"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>

@@ -9,5 +9,6 @@ namespace PNChatServer.Repository
         Task<List<UserDto>> GetContact(string userCode);
         Task<List<UserDto>> SearchContact(string userCode, string keySearch);
         Task AddContact(string userCode, UserDto user);
+        Task<List<UserDto>> GetAllUsers();
     }
 }

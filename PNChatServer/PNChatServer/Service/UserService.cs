@@ -168,6 +168,23 @@ namespace PNChatServer.Service
             return users.FindAll(x => !x.IsFriend || x.IsFriend);
         }
 
-        
+        /// <summary>
+        /// Lấy tất cả người dùng
+        /// </summary>
+        /// <returns>Danh sách người dùng</returns>
+        public async Task<List<UserDto>> GetAllUsers()
+        {
+            return await chatContext.Users.Select(x => new UserDto
+            {
+                Code = x.Code,
+                FullName = x.FullName,
+                Avatar = x.Avatar,
+                Email = x.Email,
+                Gender = x.Gender,
+                Phone = x.Phone,
+                Address = x.Address,
+                Dob = x.Dob
+            }).ToListAsync();
+        }
     }
 }

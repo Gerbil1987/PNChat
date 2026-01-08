@@ -8,7 +8,7 @@ export interface Message {
     Path: string;
     Created: Date;
     CreatedBy: String;
-
     SendTo: string;
     UserCreatedBy: User;
+    showDelete?: boolean; // Add this line
 }

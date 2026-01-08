@@ -17,3 +17,27 @@
 .emojionearea .emojionearea-editor {
     min-height: 1em;
 }
+.group-menu-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  z-index: 1050;
+}
+.group-menu-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+  z-index: 1060;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+}
+.group-menu-panel.slide-in {
+  transform: translateX(0);
+}

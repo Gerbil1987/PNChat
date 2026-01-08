@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PNChatServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3326dabf10146143ddde161e0ee539bde3a83601")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+49bbdcf95fe9b7b915985197881162a484a7ff73")]
 [assembly: System.Reflection.AssemblyProductAttribute("PNChatServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PNChatServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

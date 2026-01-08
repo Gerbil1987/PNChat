@@ -12,11 +12,13 @@ namespace PNChatServer.Controllers
     {
         private IChatBoardService _chatBoardService;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly IUserService _userService;
 
-        public ChatBoardsController(IChatBoardService chatBoardService, IHttpContextAccessor contextAccessor)
+        public ChatBoardsController(IChatBoardService chatBoardService, IHttpContextAccessor contextAccessor, IUserService userService)
         {
             _chatBoardService = chatBoardService;
             _contextAccessor = contextAccessor;
+            _userService = userService;
         }
 
         [Route("get-history")]
@@ -216,6 +218,42 @@ namespace PNChatServer.Controllers
             {
                 string userSession = SystemAuthorization.GetCurrentUser(_contextAccessor);
                 await _chatBoardService.DeleteMessage(userSession, messageId);
+                return Ok(responseAPI);
+            }
+            catch (Exception ex)
+            {
+                responseAPI.Message = ex.Message;
+                return BadRequest(responseAPI);
+            }
+        }
+
+        [Route("create-sos-group")]
+        [HttpPost]
+        public async Task<IActionResult> CreateSOSGroup()
+        {
+            ResponseAPI responseAPI = new ResponseAPI();
+            try
+            {
+                // Get all users
+                var users = await _userService.GetAllUsers();
+                var userDtos = users.Select(u => new UserDto {
+                    Code = u.Code,
+                    FullName = u.FullName,
+                    Avatar = u.Avatar,
+                    Email = u.Email,
+                    Gender = u.Gender,
+                    Phone = u.Phone,
+                    Address = u.Address,
+                    Dob = u.Dob
+                }).ToList();
+                // Create SOS group
+                var group = new GroupDto {
+                    Name = "SOS",
+                    Users = userDtos
+                };
+                string userSession = SystemAuthorization.GetCurrentUser(_contextAccessor);
+                await _chatBoardService.AddGroup(userSession, group);
+                responseAPI.Data = "SOS group created";
                 return Ok(responseAPI);
             }
             catch (Exception ex)

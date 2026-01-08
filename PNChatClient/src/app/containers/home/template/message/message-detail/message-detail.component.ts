@@ -35,6 +35,8 @@ export class MessageDetailComponent implements OnInit {
   deleteMenuPosition = { x: 0, y: 0 };
   selectedMessage: Message | null = null;
   isIosSafari: boolean = false;
+  showGroupMenu = false;
+  selectedMember: any = null;
 
   constructor(
     private callService: CallService,
@@ -104,14 +106,22 @@ export class MessageDetailComponent implements OnInit {
 
   getMessageByGroup() {
     this.chatBoardService.getMessageByGroup(this.group?.Code).subscribe({
-      next: (response: any) => (this.messages = JSON.parse(response['data'])),
+      next: (response: any) => {
+        this.messages = JSON.parse(response['data']);
+        // Add showDelete property to each message
+        this.messages.forEach((msg: any) => msg.showDelete = false);
+      },
       error: (error) => console.log('error: ', error),
     });
   }
 
   getMessageByContact() {
     this.chatBoardService.getMessageByContact(this.contact.Code).subscribe({
-      next: (response: any) => (this.messages = JSON.parse(response['data'])),
+      next: (response: any) => {
+        this.messages = JSON.parse(response['data']);
+        // Add showDelete property to each message
+        this.messages.forEach((msg: any) => msg.showDelete = false);
+      },
       error: (error) => console.log('error: ', error),
     });
   }
@@ -357,7 +367,94 @@ export class MessageDetailComponent implements OnInit {
     });
   }
 
+  toggleGroupMenu() {
+    this.showGroupMenu = !this.showGroupMenu;
+  }
+
+  leaveGroup() {
+    // Implement actual leave group logic here
+    alert('Leave group functionality not yet implemented.');
+  }
+
   // Remove these methods if not needed, or add empty stubs to fix the error
   onImageInputChange(event: any) {}
   onImageInputClicked() {}
+
+  handleRemoveUser(member: any) {
+    if (this.groupInfo.CreatedBy === this.currentUser.User) {
+      this.confirmRemoveUser(member);
+    } else {
+      alert('Only the admin can delete members from a chat.');
+    }
+  }
+
+  // Send medical emergency message with location and phone number to SOS group
+  sendMedicalEmergency() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const name = this.currentUser?.FullName || this.currentUser?.User || 'Unknown';
+        const phone = this.currentUser?.Phone || '';
+        const message = `🚨 Medical emergency (${name})\nLocation: https://maps.google.com/?q=${lat},${lng}\nContact ${phone}`;
+        const formData = new FormData();
+        formData.append(
+          'data',
+          JSON.stringify({
+            SendTo: '',
+            Content: message,
+            Type: 'text',
+          })
+        );
+        this.chatBoardService
+          .sendMessage(this.groupInfo.Code, formData)
+          .subscribe({
+            next: () => {},
+            error: (error) => alert('Failed to send medical emergency'),
+          });
+      },
+      (error) => {
+        alert('Unable to retrieve your location');
+      }
+    );
+  }
+
+  // Send incident report message with location and phone number to SOS group
+  sendIncidentReport() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const name = this.currentUser?.FullName || this.currentUser?.User || 'Unknown';
+        const phone = this.currentUser?.Phone || '';
+        const message = `⚠️ Incident (${name})\nLocation: https://maps.google.com/?q=${lat},${lng}\nContact ${phone}`;
+        const formData = new FormData();
+        formData.append(
+          'data',
+          JSON.stringify({
+            SendTo: '',
+            Content: message,
+            Type: 'text',
+          })
+        );
+        this.chatBoardService
+          .sendMessage(this.groupInfo.Code, formData)
+          .subscribe({
+            next: () => {},
+            error: (error) => alert('Failed to send incident report'),
+          });
+      },
+      (error) => {
+        alert('Unable to retrieve your location');
+      }
+    );
+  }
 }
