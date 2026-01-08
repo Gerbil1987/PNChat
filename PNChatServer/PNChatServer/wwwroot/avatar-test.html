@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Avatar Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        img {
+            max-width: 200px;
+            border: 1px solid #ccc;
+            margin: 10px;
+            padding: 5px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Avatar Image Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Default Avatar (Direct Path)</h2>
+        <img src="http://197.242.158.172:5129/assets/images/no_image.jpg" alt="Default Avatar (Direct)">
+        <p>This should show the default avatar directly from the static files middleware.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Default Avatar (Through API)</h2>
+        <img src="http://197.242.158.172:5129/api/file/img?key=/assets/images/no_image.jpg" alt="Default Avatar (API)">
+        <p>This should show the default avatar through the FileController API.</p>
+    </div>
+</body>
+</html>

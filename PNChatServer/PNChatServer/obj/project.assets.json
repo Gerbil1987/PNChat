@@ -4296,24 +4296,32 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ricoh\\.nuget\\packages\\": {}
+    "C:\\Users\\Administrator\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ricoh\\Desktop\\Code\\PN-Chat.git\\PNChatServer\\PNChatServer\\PNChatServer.csproj",
+      "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\Code\\PNChat\\PNChatServer\\PNChatServer\\PNChatServer.csproj",
       "projectName": "PNChatServer",
-      "projectPath": "C:\\Users\\ricoh\\Desktop\\Code\\PN-Chat.git\\PNChatServer\\PNChatServer\\PNChatServer.csproj",
-      "packagesPath": "C:\\Users\\ricoh\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ricoh\\Desktop\\Code\\PN-Chat.git\\PNChatServer\\PNChatServer\\obj\\",
+      "projectPath": "C:\\Users\\Administrator\\Desktop\\Code\\PNChat\\PNChatServer\\PNChatServer\\PNChatServer.csproj",
+      "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Administrator\\Desktop\\Code\\PNChat\\PNChatServer\\PNChatServer\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\ricoh\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

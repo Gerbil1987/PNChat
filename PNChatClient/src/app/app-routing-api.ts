@@ -1,11 +1,13 @@
 import { environment } from "src/environments/environment";
+import { UrlHelper } from "./core/utils/url-helper";
 
 export class AppRoutingApi {
-    static Login = environment.apiUrl + "auths/login";
-    static SignUp = environment.apiUrl + "auths/sign-up";
-    //static Image = environment.apiUrl + "img";
-    static DownloadFile = environment.apiUrl + "file";
-    static PostHubConnection = environment.apiUrl + "post-hubconnection";
+    // Use UrlHelper to ensure we always use the correct server address
+    static Login = UrlHelper.apiBaseUrl + "auths/login";
+    static SignUp = UrlHelper.apiBaseUrl + "auths/sign-up";
+    //static Image = UrlHelper.apiBaseUrl + "img";
+    static DownloadFile = UrlHelper.apiBaseUrl + "file";
+    static PostHubConnection = UrlHelper.apiBaseUrl + "post-hubconnection";
 
     static GetChatHistory = environment.apiUrl + "chatBoards/get-history";
     static GetChatBoardInfo = environment.apiUrl + "chatBoards/get-info";

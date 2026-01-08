@@ -34,6 +34,7 @@ export class MessageDetailComponent implements OnInit {
   showDeleteMenu = false;
   deleteMenuPosition = { x: 0, y: 0 };
   selectedMessage: Message | null = null;
+  isIosSafari: boolean = false;
 
   constructor(
     private callService: CallService,
@@ -43,6 +44,7 @@ export class MessageDetailComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.isIosSafari = this.checkIosSafari();
     this.currentUser = this.authService.currentUserValue;
     this.signalRService.hubConnection.on('messageHubListener', (data) => {
       console.log('messageHubListener:', data);
@@ -60,6 +62,13 @@ export class MessageDetailComponent implements OnInit {
       }
     });
     $(document).off('keydown.emojionearea');
+  }
+
+  checkIosSafari(): boolean {
+    const ua = window.navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    return isIOS && isSafari;
   }
 
   mess() {

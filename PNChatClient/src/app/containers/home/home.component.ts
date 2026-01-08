@@ -9,6 +9,7 @@ import { ListCallComponent } from './template/call/list-call/list-call.component
 import { ListContactComponent } from './template/contact/list-contact/list-contact.component';
 
 import { User } from 'src/app/core/models/user';
+import { Group } from 'src/app/core/models/group';
 import { AuthenticationService } from 'src/app/core/service/authentication.service';
 import { CallService } from 'src/app/core/service/call.service';
 import { ChatBoardService } from 'src/app/core/service/chat-board.service';
@@ -37,10 +38,10 @@ export class HomeComponent implements OnInit {
       title: 'Message',
       iconClass: 'mdi-message-text',
     },
-    {
-      title: 'Call',
-      iconClass: 'mdi-phone',
-    },
+    // {
+    //   title: 'Call',
+    //   iconClass: 'mdi-phone',
+    // },
     {
       title: 'Contacts',
       iconClass: 'mdi-account-box-outline',
@@ -58,7 +59,7 @@ export class HomeComponent implements OnInit {
   filter = {
     keySearch: '',
     groupName: '',
-    group: null,
+    group: null as Group | null,
     contact: null,
     groupCall: null,
   };
@@ -110,8 +111,34 @@ export class HomeComponent implements OnInit {
     this.filter.groupCall = groupCall;
   }
 
-  onClickContact(contact: any) {
-    this.filter.contact = contact;
+  async onClickContact(contact: any) {
+    // Always switch to the Message tab
+    this.tabIndexSelected = 0;
+    // Try to find an existing chat (group) with this contact
+    await this.listMessage.getData(); // Ensure latest data
+    const existingGroup = this.listMessage.datas.find(g => {
+      if (g.Type === 'private' && g.Users && g.Users.length === 2) {
+        return g.Users.some(u => u.Code === contact.Code);
+      }
+      return false;
+    });
+    if (existingGroup) {
+      this.filter.group = existingGroup;
+      this.filter.contact = null;
+    } else {
+      // No chat exists, start a new chat (create a new group)
+      this.chatBoardService.getChatBoardInfo('', contact.Code).subscribe({
+        next: (response: any) => {
+          const groupInfo = JSON.parse(response['data']);
+          this.filter.group = groupInfo;
+          this.filter.contact = null;
+        },
+        error: (error) => {
+          this.filter.group = null;
+          this.filter.contact = contact;
+        }
+      });
+    }
     if (window.innerWidth <= 900) {
       this.isLeftOpen = false;
     }

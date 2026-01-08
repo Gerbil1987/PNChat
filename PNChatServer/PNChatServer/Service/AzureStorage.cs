@@ -49,7 +49,7 @@ namespace PNChatServer.Service
                 }
 
             }
-            catch (Exception ex)
+            catch
             {
                 throw;
             }

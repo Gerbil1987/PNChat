@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularDev",
         policy => policy
-            .WithOrigins("http://localhost:4200")
+            .WithOrigins("http://localhost:4200", "http://197.242.158.172:4200")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
@@ -105,6 +105,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // Add this line to serve static files
 app.UseRouting();
 app.UseAuthorization();
 

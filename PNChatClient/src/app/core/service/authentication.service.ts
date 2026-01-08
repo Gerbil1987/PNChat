@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { AppRoutingApi } from 'src/app/app-routing-api';
 import { Constants } from '../utils/constants';
+import { UrlHelper } from '../utils/url-helper';
 
 @Injectable({
     providedIn: 'root',
@@ -26,7 +27,11 @@ export class AuthenticationService {
     }
 
     login(params: any) {
-        return this.http.post(AppRoutingApi.Login, params).pipe(
+        // Use UrlHelper to ensure the correct URL is used
+        const loginUrl = UrlHelper.ensureCorrectUrl(AppRoutingApi.Login);
+        console.log('Login URL:', loginUrl);
+        
+        return this.http.post(loginUrl, params).pipe(
             map((response: any) => {
                 localStorage.setItem(Constants.LOCAL_STORAGE_KEY.SESSION, response["data"]);
                 localStorage.setItem(Constants.LOCAL_STORAGE_KEY.TOKEN, JSON.parse(response["data"])["Token"]);
@@ -37,6 +42,10 @@ export class AuthenticationService {
     }
 
     signUp(params: any) {
-        return this.http.post(AppRoutingApi.SignUp, params);
+        // Use UrlHelper to ensure the correct URL is used
+        const signUpUrl = UrlHelper.ensureCorrectUrl(AppRoutingApi.SignUp);
+        console.log('SignUp URL:', signUpUrl);
+        
+        return this.http.post(signUpUrl, params);
     }
 }

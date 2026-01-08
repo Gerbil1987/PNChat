@@ -292,3 +292,61 @@ html, body {
     position: relative !important;
   }
 }
+
+/* Add responsive bottom padding for mobile devices to ensure send/add image buttons are visible above browser UI */
+@media (max-width: 600px) {
+  .body-vchat-main {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important; /* Ensures input/buttons are visible above browser UI */
+  }
+  .chat-input-area {
+    margin-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+  }
+  .box-message-send {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    background: #fff;
+    z-index: 100;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .mobile-input-spacer {
+    display: block;
+    height: 90px;
+    width: 100%;
+  }
+  .box-chat-send {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    z-index: 10;
+  }
+  .box-chat-body {
+    margin-bottom: 90px !important;
+  }
+}
+
+/* Safari-only bottom spacer for iOS Safari */
+@media (max-width: 600px) {
+  .safari-bottom-spacer {
+    display: none;
+    height: 0;
+    background: #fff;
+  }
+  @supports (-webkit-touch-callout: none) {
+    .safari-bottom-spacer {
+      display: block;
+      height: 70px;
+      background: #fff;
+      width: 100vw;
+    }
+  }
+}
+
+@media (min-width: 601px) {
+  .mobile-input-spacer {
+    display: none;
+  }
+}

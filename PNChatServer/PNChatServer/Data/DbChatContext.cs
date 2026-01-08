@@ -21,8 +21,6 @@ namespace PNChatServer.Data
 
         public DbSet<User> Users { get; set; }
 
-        public DbSet<Validator> Validators { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //flutent api cho table Call
@@ -207,17 +205,6 @@ namespace PNChatServer.Data
                     .IsUnicode(false);
                 entity.Property(e => e.UserName)
                     .HasMaxLength(32)
-                    .IsUnicode(false);
-            });
-
-            //flutent api cho table Validator
-            modelBuilder.Entity<Validator>(entity =>
-            {
-                entity.ToTable("validator");
-                entity.HasKey(e => e.PhoneNumber);
-                entity.Property(e => e.PhoneNumber)
-                    .HasColumnName("phone_number")
-                    .HasMaxLength(15)
                     .IsUnicode(false);
             });
         }

@@ -34,13 +34,13 @@
             <div [hidden]="tabIndexSelected != 0">
                 <app-list-message #listMessage (onClick)="onClickMessage($event)"></app-list-message>
             </div>
-            <div [hidden]="tabIndexSelected != 1">
+            <!--div [hidden]="tabIndexSelected != 1">
                 <app-list-call #listCall (onClick)="onClickCall($event)"></app-list-call>
-            </div>
-            <div [hidden]="tabIndexSelected != 2">
+            </div-->
+            <div [hidden]="tabIndexSelected != 1">
                 <app-list-contact #listContact (onClick)="onClickContact($event)"></app-list-contact>
             </div>
-            <div [hidden]="tabIndexSelected != 3">
+            <div [hidden]="tabIndexSelected != 2">
                 <app-list-notification></app-list-notification>
             </div>
         </div>
@@ -49,13 +49,14 @@
         <div *ngSwitchCase="0">
             <app-message-detail [group]="filter.group" (addUserToGroup)="onAddUserToGroup($event)"></app-message-detail>
         </div>
-        <div *ngSwitchCase="1">
+        <!-- Call tab hidden for now -->
+        <!-- <div *ngSwitchCase="1">
             <app-call-detail [groupCall]="filter.groupCall"></app-call-detail>
-        </div>
-        <div *ngSwitchCase="2">
+        </div> -->
+        <div *ngSwitchCase="1">
             <app-contact-detail [contact]="filter.contact"></app-contact-detail>
         </div>
-        <div *ngSwitchCase="3">
+        <div *ngSwitchCase="2">
             <app-notification-detail></app-notification-detail>
         </div>
         <div *ngSwitchDefault>
@@ -211,8 +212,8 @@
                                     <label>Sex</label>
                                     <select [(ngModel)]="userProfile.Gender" class="form-control form-control-sm">
                                         <option value="">---</option>
-                                        <option value="Nam">Male</option>
-                                        <option value="Nữ">Female</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
                                     </select>
                                 </div>
                             </div>

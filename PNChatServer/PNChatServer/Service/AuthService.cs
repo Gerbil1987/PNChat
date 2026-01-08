@@ -33,7 +33,7 @@ namespace PNChatServer.Service
                 .FirstOrDefaultAsync();
 
             if (userExist == null)
-                throw new ArgumentException("Tài khoản hoặc mật khẩu không đúng");
+                throw new ArgumentException("Incorrect account or password");
 
             userExist.LastLogin = DateTime.Now;
             await chatContext.SaveChangesAsync();
@@ -69,19 +69,11 @@ namespace PNChatServer.Service
             };
         }
 
-        /// <summary>
-        /// Đăng ký tài khoản người dùng
-        /// </summary>
-        /// <param name="user">Thông tin tài khoản</param>
+
         public async Task SignUp(User user)
         {
             if (await chatContext.Users.AnyAsync(x => x.UserName.Equals(user.UserName)))
-                throw new ArgumentException("Tài khoản đã tồn tại");
-
-            // Crusaders MC phone number validation
-            bool isValid = await chatContext.Validators.AnyAsync(v => v.PhoneNumber == user.Phone);
-            if (!isValid)
-                throw new ArgumentException("Only Crusaders MC members can register for this app");
+                throw new ArgumentException("Account already exists");
 
             User newUser = new User()
             {

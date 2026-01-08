@@ -85,6 +85,7 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mobile-input-spacer"></div>
                 </div>
             </div>
             <div class="box-chat-send d-flex align-items-end">
@@ -109,50 +110,76 @@
                     </span>
                 </div>
             </div>
+            <div class="safari-bottom-spacer"></div>
         </div>
-        <!-- Contact info overlay for mobile -->
-        <div class="contact-info-mobile-overlay" (click)="closeContactInfo()"></div>
-        <div class="box-contact-info">
-            <ng-container *ngIf="groupInfo != null">
-                <ng-container *ngIf="groupInfo.IsGroup">
-                    <div class="box-contact-info-header">
-                        <strong>Group information</strong>
+        <!-- Move input area outside scrollable chat body for iOS Safari fixed positioning -->
+        <!-- <div class="box-chat-send d-flex align-items-end" [ngClass]="{'ios-safari-fixed-input': isIosSafari}">
+            <div class="box-chat-send-media d-flex flex-column align-items-start" style="margin-right: 12px; width: 24px; min-width: 24px;">
+                <span class="mb-2" style="width: 24px; display: inline-flex; justify-content: center; align-items: center;">
+                    <input type='file' #fileInput [hidden]="true" (change)="sendFile($event)" id="file_attach_upload"
+                        accept=".xlsx,.xls,.csv,.doc,.docx">
+                    <i (click)="fileInput.click()" class="mdi mdi-attachment" style="font-size: 20px;"></i>
+                </span>
+                <span style="width: 24px; display: inline-flex; justify-content: center; align-items: center;">
+                    <input type='file' #imageInput [hidden]="true" (change)="sendImage($event); onImageInputChange($event)" (click)="onImageInputClicked()" id="image_attach_upload"
+                        accept=".gif,.jpg,.jpeg,.png">
+                    <i (click)="imageInput.click()" class="mdi mdi-camera" style="font-size: 20px;"></i>
+                </span>
+            </div>
+            <div class="box-chat-send-text flex-grow-1" style="margin-right: 12px; margin-left: 0;" (keypress)="onKeydown($event)">
+                <textarea id="my-text" (keydown)="onKeydown($event)" [(ngModel)]="textMessage" class="form-control" rows="1" placeholder="Type message here..." (focus)="setCursorToStart($event)"></textarea>
+            </div>
+            <div (click)="sendMessage()" class="btn-send-message">
+                <span title="Send">
+                    <i class="mdi mdi-send"></i>
+                </span>
+            </div>
+        </div>
+        <div class="safari-bottom-spacer"></div> -->
+    </div>
+    <!-- Contact info overlay for mobile -->
+    <div class="contact-info-mobile-overlay" (click)="closeContactInfo()"></div>
+    <div class="box-contact-info">
+        <ng-container *ngIf="groupInfo != null">
+            <ng-container *ngIf="groupInfo.IsGroup">
+                <div class="box-contact-info-header">
+                    <strong>Group information</strong>
+                </div>
+                <div class="box-contact-info-body">
+                    <div class="box-group-info">
+                        <img [src]="groupInfo.Avatar | pipeHostFile" alt="">
+                        <i onclick="$('#image_group_upload').click()" class="mdi mdi-camera"></i>
+                        <input type='file' [hidden]="true" (change)="updateGroupAvatar($event)"
+                            id="image_group_upload" accept=".jpg,.jpeg,.png">
                     </div>
-                    <div class="box-contact-info-body">
-                        <div class="box-group-info">
-                            <img [src]="groupInfo.Avatar | pipeHostFile" alt="">
-                            <i onclick="$('#image_group_upload').click()" class="mdi mdi-camera"></i>
-                            <input type='file' [hidden]="true" (change)="updateGroupAvatar($event)"
-                                id="image_group_upload" accept=".jpg,.jpeg,.png">
-                        </div>
-                        <button class="btn btn-primary btn-sm mt-2" (click)="openAddUserToGroup(); isContactInfoOpen = false">
-                            <i class="mdi mdi-account-plus"></i> Add User
-                        </button>
-                        <div>
-                            <h6 style="display: block; margin: 0 auto;">
-                                {{groupInfo.FullName}}
-                            </h6>
-                        </div>
-                        <div class="mt-1">
-                            <u>List of members</u>
-                        </div>
-                        <div class="mt-2 list-member-in-group">
-                            <ul class="list-unstyled">
-                                <li *ngFor="let member of groupInfo.Users">
-                                    <div class="user-avatar d-flex align-items-center justify-content-between">
-                                        <div>
-                                            <img [src]="member.Avatar | pipeHostFile" style="margin-right: 10px !important;">
-                                            <span>{{member.FullName}}</span>
-                                        </div>
-                                        <button *ngIf="canRemoveUser(member)" class="btn btn-danger btn-sm ml-2 rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px; min-width:32px; min-height:32px; padding:0;" (click)="confirmRemoveUser(member)" title="Remove user">
-    <i class="mdi mdi-close" style="font-size: 20px; margin: 0 auto;"></i>
-</button>
+                    <button class="btn btn-primary btn-sm mt-2" (click)="openAddUserToGroup(); isContactInfoOpen = false">
+                        <i class="mdi mdi-account-plus"></i> Add User
+                    </button>
+                    <div>
+                        <h6 style="display: block; margin: 0 auto;">
+                            {{groupInfo.FullName}}
+                        </h6>
+                    </div>
+                    <div class="mt-1">
+                        <u>List of members</u>
+                    </div>
+                    <div class="mt-2 list-member-in-group">
+                        <ul class="list-unstyled">
+                            <li *ngFor="let member of groupInfo.Users">
+                                <div class="user-avatar d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <img [src]="member.Avatar | pipeHostFile" style="margin-right: 10px !important;">
+                                        <span>{{member.FullName}}</span>
                                     </div>
-                                </li>
-                            </ul>
-                        </div>
-                        <!-- Remove User Confirmation Modal -->
-                        <div *ngIf="showRemoveUserModal" class="modal-backdrop fade show"></div>
+                                    <button *ngIf="canRemoveUser(member)" class="btn btn-danger btn-sm ml-2 rounded-circle d-flex align-items-center justify-content-center" style="width:32px; height:32px; min-width:32px; min-height:32px; padding:0;" (click)="confirmRemoveUser(member)" title="Remove user">
+        <i class="mdi mdi-close" style="font-size: 20px; margin: 0 auto;"></i>
+    </button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Remove User Confirmation Modal -->
+                    <div *ngIf="showRemoveUserModal" class="modal-backdrop fade show"></div>
 <div *ngIf="showRemoveUserModal" class="modal fade show d-block" id="removeUserModal" tabindex="-1" role="dialog" aria-labelledby="removeUserModalLabel" aria-modal="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -172,74 +199,43 @@
         </div>
     </div>
 </div>
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="!groupInfo.IsGroup">
-                    <div class="box-contact-info-header">
-                        <strong>Contact information</strong>
-                    </div>
-                    <div class="box-contact-info-body">
-                        <div class="box-info-image">
-                            <img [src]="groupInfo.Avatar | pipeHostFile" alt="">
-                        </div>
-                        <div>
-                            <h6 style="display: block; margin: 0 auto;">
-                                {{groupInfo.FullName}}
-                            </h6>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-gender-male-female"></i>
-                            <span>{{groupInfo.Gender}}</span>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-cake"></i>
-                            <span>{{groupInfo.Dob}}</span>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-cellphone"></i>
-                            <span>{{groupInfo.Phone}}</span>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-email-outline"></i>
-                            <span>{{groupInfo.Email}}</span>
-                        </div>
-                        <div>
-                            <i class="mdi mdi-map-marker"></i>
-                            <span>{{groupInfo.Address}}</span>
-                        </div>
-                    </div>
-                </ng-container>
+                </div>
             </ng-container>
-        </div>
+            <ng-container *ngIf="!groupInfo.IsGroup">
+                <div class="box-contact-info-header">
+                    <strong>Contact information</strong>
+                </div>
+                <div class="box-contact-info-body">
+                    <div class="box-info-image">
+                        <img [src]="groupInfo.Avatar | pipeHostFile" alt="">
+                    </div>
+                    <div>
+                        <h6 style="display: block; margin: 0 auto;">
+                            {{groupInfo.FullName}}
+                        </h6>
+                    </div>
+                    <div>
+                        <i class="mdi mdi-gender-male-female"></i>
+                        <span>{{groupInfo.Gender}}</span>
+                    </div>
+                    <div>
+                        <i class="mdi mdi-cake"></i>
+                        <span>{{groupInfo.Dob}}</span>
+                    </div>
+                    <div>
+                        <i class="mdi mdi-cellphone"></i>
+                        <span>{{groupInfo.Phone}}</span>
+                    </div>
+                    <div>
+                        <i class="mdi mdi-email-outline"></i>
+                        <span>{{groupInfo.Email}}</span>
+                    </div>
+                    <div>
+                        <i class="mdi mdi-map-marker"></i>
+                        <span>{{groupInfo.Address}}</span>
+                    </div>
+                </div>
+            </ng-container>
+        </ng-container>
     </div>
-</div>
-<!-- Add z-index and position for modal to ensure it appears above group info -->
-<style>
-  @media (max-width: 768px) {
-    #modalAddGroup.modal {
-      z-index: 2000 !important;
-      position: fixed !important;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.5);
-    }
-    #modalAddGroup .modal-dialog {
-      margin: 0 auto;
-      width: 95vw;
-      max-width: 500px;
-    }
-    #modalAddGroup .modal-content {
-      border-radius: 10px;
-    }
-  }
-</style>
-
-<!-- Context menu for deleting a message -->
-<div *ngIf="showDeleteMenu" [ngStyle]="{'position': 'fixed', 'top.px': deleteMenuPosition.y, 'left.px': deleteMenuPosition.x, 'z-index': 9999}" class="context-menu">
-  <button class="btn btn-danger btn-sm" (click)="deleteMessage(selectedMessage!)" [disabled]="!selectedMessage">Delete</button>
 </div>
