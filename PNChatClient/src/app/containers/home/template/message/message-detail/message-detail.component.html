@@ -258,7 +258,7 @@
             </ng-template>
             <div class="group-members-list">
                 <strong>Members</strong>
-                <ul class="list-unstyled mt-2 mb-0">
+                <ul class="list-unstyled mt-2 mb-0 scrollable-members-container">
                     <li *ngFor="let member of groupInfo.Users" class="d-flex align-items-center" style="cursor:pointer;">
                         <img [src]="member.Avatar | pipeHostFile" style="width:24px; height:24px; border-radius:50%; margin-right:8px;">
                         <span>{{member.FullName}}</span>
