@@ -47,7 +47,7 @@
     </div>
     <div [ngSwitch]="tabIndexSelected" class="body-vchat-right">
         <div *ngSwitchCase="0">
-            <app-message-detail [group]="filter.group" (addUserToGroup)="onAddUserToGroup($event)"></app-message-detail>
+            <app-message-detail [group]="filter.group" [contact]="filter.contact" (addUserToGroup)="onAddUserToGroup($event)" (groupUpdated)="onGroupUpdated($event)"></app-message-detail>
         </div>
         <!-- Call tab hidden for now -->
         <!-- <div *ngSwitchCase="1">

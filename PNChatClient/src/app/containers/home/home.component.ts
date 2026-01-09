@@ -117,27 +117,20 @@ export class HomeComponent implements OnInit {
     // Try to find an existing chat (group) with this contact
     await this.listMessage.getData(); // Ensure latest data
     const existingGroup = this.listMessage.datas.find(g => {
-      if (g.Type === 'private' && g.Users && g.Users.length === 2) {
+      if (g.Type === 'single' && g.Users && g.Users.length === 2) {
         return g.Users.some(u => u.Code === contact.Code);
       }
       return false;
     });
     if (existingGroup) {
+      // Found existing direct message group
       this.filter.group = existingGroup;
       this.filter.contact = null;
     } else {
-      // No chat exists, start a new chat (create a new group)
-      this.chatBoardService.getChatBoardInfo('', contact.Code).subscribe({
-        next: (response: any) => {
-          const groupInfo = JSON.parse(response['data']);
-          this.filter.group = groupInfo;
-          this.filter.contact = null;
-        },
-        error: (error) => {
-          this.filter.group = null;
-          this.filter.contact = contact;
-        }
-      });
+      // No chat exists yet, start a new direct message (don't set group yet)
+      // The group will be created when the first message is sent
+      this.filter.group = null;
+      this.filter.contact = contact;
     }
     if (window.innerWidth <= 900) {
       this.isLeftOpen = false;
@@ -317,6 +310,13 @@ export class HomeComponent implements OnInit {
         $('#modalAddGroup').modal();
       }
     });
+  }
+
+  onGroupUpdated(updatedGroup: any) {
+    // This is called when a new direct message group is created and the group code is updated
+    console.log('✅ onGroupUpdated called with group:', updatedGroup);
+    this.filter.group = updatedGroup;
+    this.filter.contact = null;
   }
 
   submitAddUserToGroup() {

@@ -84,6 +84,28 @@ namespace PNChatServer.Service
         {
             Group group = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(groupCode));
 
+            // If no group found by groupCode, try to find an existing direct message group with the contact
+            if (group == null && !string.IsNullOrEmpty(contactCode))
+            {
+                System.Console.WriteLine($"[GetInfo] No group by code, looking for existing SINGLE group with contact: {contactCode}");
+                string existingGroupCode = await chatContext.Groups
+                    .Where(x => x.Type.Equals(Constants.GroupType.SINGLE))
+                    .Where(x => x.GroupUsers.Any(y => y.UserCode.Equals(userSession) &&
+                                x.GroupUsers.Any(y => y.UserCode.Equals(contactCode))))
+                    .Select(x => x.Code)
+                    .FirstOrDefaultAsync();
+                
+                if (!string.IsNullOrEmpty(existingGroupCode))
+                {
+                    System.Console.WriteLine($"[GetInfo] Found existing SINGLE group: {existingGroupCode}");
+                    group = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(existingGroupCode));
+                }
+                else
+                {
+                    System.Console.WriteLine($"[GetInfo] No existing SINGLE group found, will return user info with user code");
+                }
+            }
+
             if (group == null)
             {
                 return await chatContext.Users
@@ -107,27 +129,32 @@ namespace PNChatServer.Service
             {
                 if (group.Type.Equals(Constants.GroupType.SINGLE))
                 {
-                    string userCode = group.GroupUsers.FirstOrDefault(x => x.UserCode != userSession)?.UserCode;
-                    return await chatContext.Users
-                            .Where(x => x.Code.Equals(userCode))
-                            .OrderBy(x => x.FullName)
-                            .Select(x => new
+                    // Return both the direct message group info AND the Users array
+                    // This allows the frontend to extract the contact code from Users
+                    return await Task.FromResult(new
+                    {
+                        IsGroup = false,
+                        Code = group.Code,  // Return the GROUP code!
+                        Type = group.Type,
+                        Avatar = group.Avatar,
+                        Name = group.GroupUsers
+                            .OrderBy(x => x.User.FullName)
+                            .Where(x => x.UserCode != userSession)
+                            .Select(x => x.User.FullName)
+                            .FirstOrDefault() ?? "",
+                        Users = group.GroupUsers
+                            .OrderBy(x => x.User.FullName)
+                            .Select(x => new UserDto()
                             {
-                                IsGroup = false,
-                                Code = x.Code,
-                                Address = x.Address,
-                                Avatar = x.Avatar,
-                                Dob = x.Dob,
-                                Email = x.Email,
-                                FullName = x.FullName,
-                                Gender = x.Gender,
-                                Phone = x.Phone
-                            })
-                             .FirstOrDefaultAsync();
+                                Code = x.User.Code,
+                                FullName = x.User.FullName,
+                                Avatar = x.User.Avatar
+                            }).ToList()
+                    });
                 }
                 else
                 {
-                    return new
+                    return await Task.FromResult(new
                     {
                         IsGroup = true,
                         Code = group.Code,
@@ -142,7 +169,7 @@ namespace PNChatServer.Service
                                 FullName = x.User.FullName,
                                 Avatar = x.User.Avatar
                             }).ToList()
-                    };
+                    });
                 }
             }
         }
@@ -223,45 +250,107 @@ namespace PNChatServer.Service
         }
         public async Task SendMessage(string userCode, string groupCode, MessageDto message)
         {
-            Group grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(groupCode));
+            Group grp = null;
             DateTime dateNow = DateTime.Now;
-
-            if (grp == null)
+            
+            // Debug logging
+            System.Console.WriteLine($"[SendMessage] START - userCode: {userCode}, groupCode: {groupCode}, SendTo: {message.SendTo}, Content: {message.Content}");
+            
+            // Only try to look up by groupCode if it's provided and not empty
+            if (!string.IsNullOrEmpty(groupCode))
             {
-                string grpCode = await chatContext.Groups
-                    .Where(x => x.Type.Equals(Constants.GroupType.SINGLE))
-                    .Where(x => x.GroupUsers.Any(y => y.UserCode.Equals(userCode) &&
-                                x.GroupUsers.Any(y => y.UserCode.Equals(message.SendTo))))
-                    .Select(x => x.Code)
-                    .FirstOrDefaultAsync();
-
-                grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(grpCode));
-            }
-
-            if (grp == null)
-            {
-                User sendTo = await chatContext.Users.FirstOrDefaultAsync(x => x.Code.Equals(message.SendTo));
-                grp = new Group()
+                System.Console.WriteLine($"[SendMessage] Looking up group by code: {groupCode}");
+                grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(groupCode));
+                if (grp != null)
                 {
-                    Code = Guid.NewGuid().ToString("N"),
-                    Name = sendTo.FullName,
-                    Created = dateNow,
-                    CreatedBy = userCode,
-                    Type = Constants.GroupType.SINGLE,
-                    GroupUsers = new List<GroupUser>()
-                        {
-                            new GroupUser()
-                            {
-                                UserCode = userCode
-                            },
-                            new GroupUser()
-                            {
-                                UserCode = sendTo.Code
-                            }
-                        }
-                };
-                await chatContext.Groups.AddAsync(grp);
+                    System.Console.WriteLine($"[SendMessage] Found group by code: {grp.Code}, Type: {grp.Type}, Name: {grp.Name}");
+                }
+                else
+                {
+                    System.Console.WriteLine($"[SendMessage] ❌ Group NOT found by code: {groupCode}");
+                    // Log all groups to debug
+                    var allGroups = await chatContext.Groups.ToListAsync();
+                    System.Console.WriteLine($"[SendMessage] Total groups in database: {allGroups.Count}");
+                    foreach (var g in allGroups)
+                    {
+                        System.Console.WriteLine($"[SendMessage]   - Group: {g.Code}, Type: {g.Type}");
+                    }
+                }
             }
+
+            if (grp == null)
+            {
+                // Try to find or create a single-type group with SendTo
+                if (!string.IsNullOrEmpty(message.SendTo))
+                {
+                    System.Console.WriteLine($"[SendMessage] Looking up single-type group with SendTo: {message.SendTo}");
+                    string grpCode = await chatContext.Groups
+                        .Where(x => x.Type.Equals(Constants.GroupType.SINGLE))
+                        .Where(x => x.GroupUsers.Any(y => y.UserCode.Equals(userCode)) &&
+                                    x.GroupUsers.Any(y => y.UserCode.Equals(message.SendTo)))
+                        .Select(x => x.Code)
+                        .FirstOrDefaultAsync();
+
+                    if (!string.IsNullOrEmpty(grpCode))
+                    {
+                        System.Console.WriteLine($"[SendMessage] Found single-type group: {grpCode}");
+                        grp = await chatContext.Groups.FirstOrDefaultAsync(x => x.Code.Equals(grpCode));
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"[SendMessage] No existing single-type group found for users {userCode} and {message.SendTo}");
+                    }
+                }
+            }
+
+            // If still not found, try to create a new direct message group
+            if (grp == null && !string.IsNullOrEmpty(message.SendTo))
+            {
+                // Only try to create a direct message group if SendTo is provided
+                if (!string.IsNullOrEmpty(message.SendTo))
+                {
+                    System.Console.WriteLine($"[SendMessage] Creating new direct message group for SendTo: {message.SendTo}");
+                    User sendTo = await chatContext.Users.FirstOrDefaultAsync(x => x.Code.Equals(message.SendTo));
+                    if (sendTo != null)
+                    {
+                        System.Console.WriteLine($"[SendMessage] Found recipient: {sendTo.FullName}");
+                        grp = new Group()
+                        {
+                            Code = Guid.NewGuid().ToString("N"),
+                            Name = sendTo.FullName,
+                            Created = dateNow,
+                            CreatedBy = userCode,
+                            Type = Constants.GroupType.SINGLE,
+                            GroupUsers = new List<GroupUser>()
+                                {
+                                    new GroupUser()
+                                    {
+                                        UserCode = userCode
+                                    },
+                                    new GroupUser()
+                                    {
+                                        UserCode = sendTo.Code
+                                    }
+                                }
+                        };
+                        await chatContext.Groups.AddAsync(grp);
+                        System.Console.WriteLine($"[SendMessage] Created new group: {grp.Code}");
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"[SendMessage] Recipient not found: {message.SendTo}");
+                    }
+                }
+            }
+
+            // If we still don't have a group, throw an error
+            if (grp == null)
+            {
+                System.Console.WriteLine($"[SendMessage] ❌ FAILED - Could not find or create group");
+                throw new ArgumentException("Invalid group or recipient specified");
+            }
+
+            System.Console.WriteLine($"[SendMessage] Proceeding with group: {grp.Code}, Type: {grp.Type}");
 
             if (message.Attachments != null && message.Attachments.Count > 0)
             {
@@ -293,12 +382,15 @@ namespace PNChatServer.Service
                 Content = message.Content,
                 Created = dateNow,
                 CreatedBy = userCode,
-                GroupCode = grp.Code,
+                GroupCode = grp != null ? grp.Code : throw new ArgumentException("Invalid group or recipient specified"),
                 Path = message.Path,
                 Type = message.Type,
             };
 
-            grp.LastActive = dateNow;
+            if (grp != null)
+            {
+                grp.LastActive = dateNow;
+            }
 
             await chatContext.Messages.AddAsync(msg);
             await chatContext.SaveChangesAsync();
@@ -308,7 +400,7 @@ namespace PNChatServer.Service
             }
             catch (Exception ex)
             {
-                
+                System.Console.WriteLine($"[SendMessage] Error notifying hub: {ex.Message}");
             }
         }
         public async Task<List<MessageDto>> GetMessageByGroup(string userCode, string groupCode)

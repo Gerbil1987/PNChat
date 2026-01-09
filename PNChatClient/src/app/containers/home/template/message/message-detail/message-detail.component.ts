@@ -7,6 +7,7 @@ import { AuthenticationService } from 'src/app/core/service/authentication.servi
 import { CallService } from 'src/app/core/service/call.service';
 import { ChatBoardService } from 'src/app/core/service/chat-board.service';
 import { SignalRService } from 'src/app/core/service/signalR.service';
+import { NotificationService } from 'src/app/core/service/notification.service';
 import { DataHelper } from 'src/app/core/utils/data-helper';
 
 declare const $: any;
@@ -18,8 +19,9 @@ declare const $: any;
 })
 export class MessageDetailComponent implements OnInit {
   @Input() group!: any;
-  @Input() contact!: User;
+  @Input() contact: User | null = null;
   @Output() addUserToGroup = new EventEmitter<any>();
+  @Output() groupUpdated = new EventEmitter<any>();  // Emit when group is updated after sending new direct message
 
   currentUser: any = {};
   messages: Message[] = [];
@@ -42,7 +44,8 @@ export class MessageDetailComponent implements OnInit {
     private callService: CallService,
     private chatBoardService: ChatBoardService,
     private authService: AuthenticationService,
-    private signalRService: SignalRService
+    private signalRService: SignalRService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -51,6 +54,9 @@ export class MessageDetailComponent implements OnInit {
     this.signalRService.hubConnection.on('messageHubListener', (data) => {
       console.log('messageHubListener:', data);
       this.getMessage();
+      
+      // Show notification for incoming message
+      this.handleIncomingMessageNotification(data);
     });
     const self = this;
     $("#my-text").emojioneArea({
@@ -116,14 +122,16 @@ export class MessageDetailComponent implements OnInit {
   }
 
   getMessageByContact() {
-    this.chatBoardService.getMessageByContact(this.contact.Code).subscribe({
-      next: (response: any) => {
-        this.messages = JSON.parse(response['data']);
-        // Add showDelete property to each message
-        this.messages.forEach((msg: any) => msg.showDelete = false);
-      },
-      error: (error) => console.log('error: ', error),
-    });
+    if (this.contact) {
+      this.chatBoardService.getMessageByContact(this.contact.Code).subscribe({
+        next: (response: any) => {
+          this.messages = JSON.parse(response['data']);
+          // Add showDelete property to each message
+          this.messages.forEach((msg: any) => msg.showDelete = false);
+        },
+        error: (error) => console.log('error: ', error),
+      });
+    }
   }
 
   toggleContact() {
@@ -142,38 +150,193 @@ export class MessageDetailComponent implements OnInit {
   }
 
   sendMessage() {
-    this.textMessage = `${this.textMessage}${$("#my-text").emojioneArea({
+    // Get message from emoji area (not from ngModel which isn't updated by emoji library)
+    let messageContent = '';
+    
+    try {
+      const emojiArea = $("#my-text").data('emojioneArea');
+      if (emojiArea) {
+        messageContent = emojiArea.getText().trim();
+        console.log('Got text from emojioneArea:', messageContent);
+      } else {
+        // Fallback to textarea value
+        messageContent = $("#my-text").val()?.trim() || '';
+        console.log('Got text from textarea:', messageContent);
+      }
+    } catch (e) {
+      console.log('Error getting emoji area text, using textarea:', e);
+      messageContent = $("#my-text").val()?.trim() || '';
+    }
 
-    }).val()}`;
-    if (this.textMessage == null || this.textMessage.trim() == '') return;
+    console.log('Final messageContent:', messageContent);
+    
+    // Check if message is empty
+    if (!messageContent || messageContent === '') {
+      console.log('❌ Message is empty, returning');
+      return;
+    }
+
+    // Check if we have a group or contact
+    if (!this.group && !this.contact) {
+      console.log('❌ No group or contact selected');
+      return;
+    }
+
     const formData = new FormData();
 
-    formData.append(
-      'data',
-      JSON.stringify({
-        SendTo: this.contact == null ? '' : this.contact.Code,
-        Content: this.textMessage.trim(),
-        Type: 'text',
-      })
-    );
+    console.log('✅ Creating FormData with message:', messageContent);
 
+    // Determine if this is a direct message or group message
+    // A direct message group has IsGroup: false (it's a SINGLE type group in the backend)
+    const isDirectMessage = this.group && this.group.IsGroup === false;
+    const isGroupMessage = this.group && this.group.IsGroup === true;
+    const isNewDirectMessage = this.group && !this.group.Users; // New direct message has no Users array yet
+    const isNewContactMessage = !this.group && this.contact; // New message to a contact with no group yet
+    
+    // Build the message data
+    const messageData: any = {
+      Content: messageContent,
+      Type: 'text',
+    };
+
+    if (isNewContactMessage) {
+      // Brand new direct message to a contact (no group exists yet)
+      if (this.contact) {
+        messageData.SendTo = this.contact.Code;
+        console.log('✅ New contact message using SendTo:', this.contact.Code);
+      }
+    } else if (isDirectMessage) {
+      // For direct messages, we need to set SendTo to identify the recipient
+      let contactCode: string | null = null;
+      
+      console.log('DEBUG isDirectMessage - this.group:', this.group);
+      console.log('DEBUG isDirectMessage - this.group.Users:', this.group?.Users);
+      console.log('DEBUG isNewDirectMessage:', isNewDirectMessage);
+      
+      if (isNewDirectMessage) {
+        // New direct message: group.Code is actually the recipient's user code
+        contactCode = this.group.Code;
+        console.log('DEBUG - New direct message, using group.Code as recipient:', contactCode);
+      } else if (this.group && this.group.Users && this.group.Users.length > 0) {
+        // Existing direct message group: extract the other user's code from Users array
+        console.log('DEBUG - Found', this.group.Users.length, 'users in group');
+        const otherUser = this.group.Users.find((u: any) => u.Code !== this.currentUser.Code);
+        if (otherUser) {
+          contactCode = otherUser.Code;
+          console.log('DEBUG - Found other user:', otherUser.Code);
+        } else {
+          console.log('DEBUG - No other user found in group');
+        }
+      }
+      
+      // Fallback: use this.contact if available
+      if (!contactCode && this.contact) {
+        contactCode = this.contact.Code;
+        console.log('DEBUG - Using contact as fallback:', contactCode);
+      }
+      
+      if (contactCode) {
+        messageData.SendTo = contactCode;
+        console.log('✅ Direct message using SendTo:', contactCode);
+      } else {
+        console.log('⚠️ Direct message but could not determine contact code');
+      }
+    } else if (isGroupMessage) {
+      // True group message - SendTo is not needed
+      console.log('✅ Group message to group:', this.group?.Code);
+    }
+
+    formData.append('data', JSON.stringify(messageData));
+
+    // For new direct messages (no existing group), send empty group code
+    // The backend will use SendTo to find or create the direct message group
+    let groupCodeToSend = '';
+    if (this.group) {
+      if (isNewDirectMessage) {
+        console.log('✅ New direct message - sending empty groupCode, SendTo in payload');
+        groupCodeToSend = '';
+      } else {
+        console.log('✅ Sending message with groupCode:', this.group.Code);
+        groupCodeToSend = this.group.Code;
+      }
+    }
+    
+    console.log('✅ FormData contents - data field:', JSON.stringify(messageData));
+    console.log('✅ GroupCode parameter:', groupCodeToSend || 'EMPTY STRING');
+    
     this.chatBoardService
-      .sendMessage(this.group == null ? '' : this.group.Code, formData)
+      .sendMessage(groupCodeToSend, formData)
       .subscribe({
-        next: (response: any) => (this.textMessage = ''),
-        error: (error) => console.log('error: ', error),
+        next: (response: any) => {
+          console.log('✅ Message sent successfully:', response);
+          this.textMessage = '';
+          // Clear emoji area
+          try {
+            const emojiArea = $("#my-text").data('emojioneArea');
+            if (emojiArea) {
+              emojiArea.clear();
+              console.log('Cleared emojioneArea');
+            }
+          } catch (e) {
+            console.log('Emoji area clear error:', e);
+          }
+          $(".emojionearea-editor").html('');
+          
+          // If this was a new direct message, we need to fetch the updated group info
+          // with the actual group code that was created by the backend
+          if (isNewDirectMessage && this.contact) {
+            console.log('✅ New direct message sent - fetching updated group info for:', this.contact.Code);
+            this.chatBoardService.getChatBoardInfo('', this.contact.Code).subscribe({
+              next: (response: any) => {
+                const updatedGroupInfo = JSON.parse(response['data']);
+                console.log('✅ Updated group info received:', updatedGroupInfo);
+                // Update the group reference with the actual group code from the backend
+                if (updatedGroupInfo && updatedGroupInfo.Code) {
+                  this.group = updatedGroupInfo;
+                  console.log('✅ Updated this.group with actual group code:', this.group.Code);
+                  // Emit event to parent component to update the group
+                  this.groupUpdated.emit(this.group);
+                  // NOW refresh the message list after updating the group
+                  this.getMessage();
+                }
+              },
+              error: (error) => {
+                console.error('Error fetching updated group info:', error);
+              }
+            });
+          } else {
+            // For existing conversations, just refresh the message list
+            this.getMessage();
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error sending message:', error);
+          console.error('Error status:', error?.status);
+          console.error('Error statusText:', error?.statusText);
+          console.error('Full error response:', error);
+          if (error?.error) {
+            console.error('Error body:', error.error);
+            console.error('Server error message:', typeof error.error === 'string' ? error.error : JSON.stringify(error.error));
+          }
+          // Log the group info for debugging
+          console.log('DEBUG - Current group object:', JSON.stringify(this.group));
+          console.log('DEBUG - Group code being sent:', groupCodeToSend || 'NONE');
+          console.log('DEBUG - Contact object:', JSON.stringify(this.contact));
+        },
       });
-
-      $(".emojionearea-editor").html('');
   }
 
 
 
   sendFile(event: any) {
     const isGroup = !!this.group;
-    const sendTo = isGroup ? '' : (this.contact && this.contact.Code ? this.contact.Code : '');
-    if (event.target.files && event.target.files[0] && (isGroup || sendTo)) {
-      console.log('sendFile called', event.target.files, 'sendTo', sendTo, 'isGroup', isGroup);
+    const isDirectMessage = this.group && this.group.IsGroup === false;
+    const isGroupMessage = this.group && this.group.IsGroup === true;
+    const isNewDirectMessage = this.group && !this.group.Users;
+    const isNewContactMessage = !this.group && this.contact;
+    
+    if (event.target.files && event.target.files[0] && (isGroup || (this.contact && this.contact.Code))) {
+      console.log('sendFile called - isGroup:', isGroup, 'isDirectMessage:', isDirectMessage, 'isNewContactMessage:', isNewContactMessage);
       let filesToUpload: any[] = [];
       for (let i = 0; i < event.target.files.length; i++) {
         filesToUpload.push(event.target.files[i]);
@@ -183,18 +346,88 @@ export class MessageDetailComponent implements OnInit {
         formData.append('files', file, file.name);
       });
       const contentValue = this.textMessage && this.textMessage.trim() !== '' ? this.textMessage.trim() : 'file';
-      formData.append(
-        'data',
-        JSON.stringify({
-          SendTo: sendTo,
-          Content: contentValue,
-          Type: 'attachment',
-        })
-      );
+      
+      // Build message data with proper SendTo handling
+      const messageData: any = {
+        Content: contentValue,
+        Type: 'attachment',
+      };
+      
+      if (isNewContactMessage) {
+        // Brand new file to a contact with no group yet
+        if (this.contact) {
+          messageData.SendTo = this.contact.Code;
+          console.log('✅ New contact file using SendTo:', this.contact.Code);
+        }
+      } else if (isDirectMessage) {
+        // Direct message - set SendTo to recipient
+        let contactCode: string | null = null;
+        if (isNewDirectMessage) {
+          // New direct message: group.Code is the recipient's user code
+          contactCode = this.group.Code;
+        } else if (this.group && this.group.Users && this.group.Users.length > 0) {
+          // Existing direct message group: extract other user
+          const otherUser = this.group.Users.find((u: any) => u.Code !== this.currentUser.Code);
+          if (otherUser) {
+            contactCode = otherUser.Code;
+          }
+        }
+        
+        if (!contactCode && this.contact) {
+          contactCode = this.contact.Code;
+        }
+        
+        if (contactCode) {
+          messageData.SendTo = contactCode;
+        }
+      } else if (isGroupMessage) {
+        // Group message - don't include SendTo
+      }
+      
+      formData.append('data', JSON.stringify(messageData));
+      
+      // For new direct messages or new contact messages, send empty groupCode
+      let groupCodeToSend = '';
+      if (isGroup) {
+        if (isNewDirectMessage) {
+          groupCodeToSend = '';
+        } else {
+          groupCodeToSend = this.group.Code;
+        }
+      }
+      // For new contact messages, groupCode is already empty
+      
       this.chatBoardService
-        .sendMessage(isGroup ? this.group.Code : '', formData)
+        .sendMessage(groupCodeToSend, formData)
         .subscribe({
-          next: (response: any) => (this.textMessage = ''),
+          next: (response: any) => {
+            console.log('✅ File sent successfully');
+            this.textMessage = '';
+            
+            // If this was a new direct message or new contact message, fetch the updated group info first
+            if ((isNewDirectMessage || isNewContactMessage) && this.contact) {
+              console.log('✅ New direct message (file) sent - fetching updated group info for:', this.contact.Code);
+              this.chatBoardService.getChatBoardInfo('', this.contact.Code).subscribe({
+                next: (response: any) => {
+                  const updatedGroupInfo = JSON.parse(response['data']);
+                  if (updatedGroupInfo && updatedGroupInfo.Code) {
+                    this.group = updatedGroupInfo;
+                    console.log('✅ Updated this.group with actual group code (file):', this.group.Code);
+                    // Emit event to parent component to update the group
+                    this.groupUpdated.emit(this.group);
+                    // NOW refresh the message list after updating the group
+                    this.getMessage();
+                  }
+                },
+                error: (error) => {
+                  console.error('Error fetching updated group info (file):', error);
+                }
+              });
+            } else {
+              // For existing conversations, just refresh the message list
+              this.getMessage();
+            }
+          },
           error: (error) => console.log('error: ', error),
         });
       // Reset input value so (change) will fire even for the same file
@@ -204,10 +437,14 @@ export class MessageDetailComponent implements OnInit {
 
   sendImage(event: any) {
     const isGroup = !!this.group;
-    const sendTo = isGroup ? '' : (this.contact && this.contact.Code ? this.contact.Code : '');
-    console.log('sendImage: contact', this.contact, 'contact.Code', this.contact && this.contact.Code, 'sendTo', sendTo, 'isGroup', isGroup);
-    if (event.target.files && event.target.files[0] && (isGroup || sendTo)) {
-      console.log('sendImage called', event.target.files, 'sendTo', sendTo, 'isGroup', isGroup);
+    const isDirectMessage = this.group && this.group.IsGroup === false;
+    const isGroupMessage = this.group && this.group.IsGroup === true;
+    const isNewDirectMessage = this.group && !this.group.Users;
+    const isNewContactMessage = !this.group && this.contact;
+    
+    console.log('sendImage: isGroup', isGroup, 'isDirectMessage', isDirectMessage, 'isGroupMessage', isGroupMessage, 'isNewContactMessage', isNewContactMessage);
+    if (event.target.files && event.target.files[0] && (isGroup || (this.contact && this.contact.Code))) {
+      console.log('sendImage called');
       let filesToUpload: any[] = [];
       for (let i = 0; i < event.target.files.length; i++) {
         filesToUpload.push(event.target.files[i]);
@@ -217,18 +454,88 @@ export class MessageDetailComponent implements OnInit {
         formData.append('files', file, file.name);
       });
       const contentValue = this.textMessage && this.textMessage.trim() !== '' ? this.textMessage.trim() : 'image';
-      formData.append(
-        'data',
-        JSON.stringify({
-          SendTo: sendTo,
-          Content: contentValue,
-          Type: 'media',
-        })
-      );
+      
+      // Build message data with proper SendTo handling
+      const messageData: any = {
+        Content: contentValue,
+        Type: 'media',
+      };
+      
+      if (isNewContactMessage) {
+        // Brand new image to a contact with no group yet
+        if (this.contact) {
+          messageData.SendTo = this.contact.Code;
+          console.log('✅ New contact image using SendTo:', this.contact.Code);
+        }
+      } else if (isDirectMessage) {
+        // Direct message - set SendTo to recipient
+        let contactCode: string | null = null;
+        if (isNewDirectMessage) {
+          // New direct message: group.Code is the recipient's user code
+          contactCode = this.group.Code;
+        } else if (this.group && this.group.Users && this.group.Users.length > 0) {
+          // Existing direct message group: extract other user
+          const otherUser = this.group.Users.find((u: any) => u.Code !== this.currentUser.Code);
+          if (otherUser) {
+            contactCode = otherUser.Code;
+          }
+        }
+        
+        if (!contactCode && this.contact) {
+          contactCode = this.contact.Code;
+        }
+        
+        if (contactCode) {
+          messageData.SendTo = contactCode;
+        }
+      } else if (isGroupMessage) {
+        // Group message - don't include SendTo
+      }
+      
+      formData.append('data', JSON.stringify(messageData));
+      
+      // For new direct messages or new contact messages, send empty groupCode
+      let groupCodeToSend = '';
+      if (isGroup) {
+        if (isNewDirectMessage) {
+          groupCodeToSend = '';
+        } else {
+          groupCodeToSend = this.group.Code;
+        }
+      }
+      // For new contact messages, groupCode is already empty
+      
       this.chatBoardService
-        .sendMessage(isGroup ? this.group.Code : '', formData)
+        .sendMessage(groupCodeToSend, formData)
         .subscribe({
-          next: (response: any) => (this.textMessage = ''),
+          next: (response: any) => {
+            console.log('✅ Image sent successfully');
+            this.textMessage = '';
+            
+            // If this was a new direct message or new contact message, fetch the updated group info first
+            if ((isNewDirectMessage || isNewContactMessage) && this.contact) {
+              console.log('✅ New direct message (image) sent - fetching updated group info for:', this.contact.Code);
+              this.chatBoardService.getChatBoardInfo('', this.contact.Code).subscribe({
+                next: (response: any) => {
+                  const updatedGroupInfo = JSON.parse(response['data']);
+                  if (updatedGroupInfo && updatedGroupInfo.Code) {
+                    this.group = updatedGroupInfo;
+                    console.log('✅ Updated this.group with actual group code (image):', this.group.Code);
+                    // Emit event to parent component to update the group
+                    this.groupUpdated.emit(this.group);
+                    // NOW refresh the message list after updating the group
+                    this.getMessage();
+                  }
+                },
+                error: (error) => {
+                  console.error('Error fetching updated group info (image):', error);
+                }
+              });
+            } else {
+              // For existing conversations, just refresh the message list
+              this.getMessage();
+            }
+          },
           error: (error) => console.log('error: ', error),
         });
       // Reset input value so (change) will fire even for the same file
@@ -456,5 +763,43 @@ export class MessageDetailComponent implements OnInit {
         alert('Unable to retrieve your location');
       }
     );
+  }
+
+  // Handle incoming message notifications
+  private handleIncomingMessageNotification(data: any): void {
+    if (!data) return;
+
+    // Don't show notification for messages from current user
+    if (data.CreatedBy === this.currentUser?.User) {
+      return;
+    }
+
+    const senderName = data.UserCreatedBy?.FullName || data.UserCreatedBy?.User || 'Unknown';
+    const messageContent = data.Content || '';
+
+    // Check if this is an SOS emergency message
+    if (this.isEmergencyMessage(messageContent)) {
+      const emergencyType = messageContent.includes('Medical') ? 'medical' : 'incident';
+      this.notificationService.showEmergencyNotification(senderName, emergencyType);
+    } else if (this.group) {
+      // Show group notification
+      this.notificationService.showGroupNotification(
+        this.group.Name || 'Group',
+        senderName,
+        messageContent
+      );
+    } else if (this.contact) {
+      // Show direct message notification
+      this.notificationService.showMessageNotification(
+        senderName,
+        messageContent,
+        data.UserCreatedBy?.Avatar
+      );
+    }
+  }
+
+  // Check if message is an emergency message
+  private isEmergencyMessage(content: string): boolean {
+    return !!(content && (content.includes('🚨') || content.includes('⚠️')));
   }
 }
