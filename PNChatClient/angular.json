@@ -19,7 +19,7 @@
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/pnchat.ico", "src/assets", "src/web.config"],
+            "assets": ["src/pnchat.ico", "src/assets", "src/web.config", "src/service-worker.js"],
             "styles": [
               "src/styles.css",
               "node_modules/ngx-spinner/animations/ball-scale-multiple.css"

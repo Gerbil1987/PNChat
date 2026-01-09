@@ -767,34 +767,96 @@ export class MessageDetailComponent implements OnInit {
 
   // Handle incoming message notifications
   private handleIncomingMessageNotification(data: any): void {
-    if (!data) return;
+    console.log('📬 handleIncomingMessageNotification called with data:', data);
+    
+    if (!data) {
+      console.log('❌ No data provided');
+      return;
+    }
 
     // Don't show notification for messages from current user
     if (data.CreatedBy === this.currentUser?.User) {
+      console.log('⚠️ Skipping notification - message from current user:', data.CreatedBy);
       return;
     }
 
     const senderName = data.UserCreatedBy?.FullName || data.UserCreatedBy?.User || 'Unknown';
     const messageContent = data.Content || '';
+    const senderAvatar = data.UserCreatedBy?.Avatar;
+
+    console.log('📬 Processing notification for sender:', senderName);
+    console.log('📬 Message content:', messageContent);
+    console.log('📬 Current group:', this.group);
+    console.log('📬 Current contact:', this.contact);
 
     // Check if this is an SOS emergency message
     if (this.isEmergencyMessage(messageContent)) {
+      console.log('🚨 Detected emergency message');
       const emergencyType = messageContent.includes('Medical') ? 'medical' : 'incident';
       this.notificationService.showEmergencyNotification(senderName, emergencyType);
+      // Also send to service worker for background notifications
+      this.sendToServiceWorker({
+        title: emergencyType === 'medical' ? '🚨 Medical Emergency!' : '⚠️ Incident Alert!',
+        body: `${senderName} has reported a ${emergencyType === 'medical' ? 'medical' : 'incident'} emergency!`,
+        icon: senderAvatar || '/pnchat.ico',
+        badge: '/pnchat.ico',
+        requireInteraction: true
+      });
     } else if (this.group) {
+      console.log('👥 Sending group notification for group:', this.group.Name || this.group.Code);
       // Show group notification
       this.notificationService.showGroupNotification(
         this.group.Name || 'Group',
         senderName,
         messageContent
       );
+      // Also send to service worker for background notifications
+      this.sendToServiceWorker({
+        title: `${this.group.Name || 'Group'} - ${senderName}`,
+        body: messageContent.length > 100 ? messageContent.substring(0, 100) + '...' : messageContent,
+        icon: senderAvatar || '/pnchat.ico',
+        badge: '/pnchat.ico'
+      });
     } else if (this.contact) {
+      console.log('📨 Sending direct message notification for contact:', this.contact.Code);
       // Show direct message notification
       this.notificationService.showMessageNotification(
         senderName,
         messageContent,
-        data.UserCreatedBy?.Avatar
+        senderAvatar
       );
+      // Also send to service worker for background notifications
+      this.sendToServiceWorker({
+        title: `New message from ${senderName}`,
+        body: messageContent.length > 100 ? messageContent.substring(0, 100) + '...' : messageContent,
+        icon: senderAvatar || '/pnchat.ico',
+        badge: '/pnchat.ico'
+      });
+    } else {
+      console.warn('⚠️ No group or contact found for notification');
+    }
+  }
+
+  // Send notification to service worker for background/mobile notifications
+  private sendToServiceWorker(notificationData: any): void {
+    console.log('🔄 Sending notification to service worker:', notificationData);
+    
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      console.log('✅ Service worker controller found, posting message');
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: notificationData.title,
+        options: notificationData
+      });
+      console.log('✅ Message posted to service worker');
+    } else {
+      console.warn('⚠️ Service worker controller not available');
+      if (!('serviceWorker' in navigator)) {
+        console.warn('⚠️ Service Workers not supported');
+      }
+      if (navigator.serviceWorker && !navigator.serviceWorker.controller) {
+        console.warn('⚠️ No service worker controller (not yet activated or no active SW)');
+      }
     }
   }
 

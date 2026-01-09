@@ -64,6 +64,7 @@ namespace PNChatServer.Service
                 User = userExist.Code,
                 FullName = userExist.FullName,
                 Avatar = userExist.Avatar,
+                Phone = userExist.Phone,
                 Token = jwtTokenHandler.WriteToken(token),
 
             };
