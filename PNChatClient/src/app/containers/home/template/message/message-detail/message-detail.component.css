@@ -37,9 +37,31 @@
   transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .group-menu-panel.slide-in {
   transform: translateX(0);
+}
+
+.group-menu-panel > .group-menu-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.group-buttons {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.group-buttons .btn {
+  margin: 0 !important;
+  padding: 8px 16px !important;
 }
 
 /* Scrollable members list styling */
@@ -47,7 +69,15 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
+}
+
+.group-members-list > strong {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: block;
 }
 
 .scrollable-members-container {
@@ -56,6 +86,13 @@
   overflow-x: hidden;
   padding-right: 8px;
   margin-right: -8px;
+  margin: 0 !important;
+  padding-left: 0;
+  padding-bottom: 0;
+}
+
+.scrollable-members-container > li {
+  padding: 8px 0;
 }
 
 /* Custom scrollbar styling */
